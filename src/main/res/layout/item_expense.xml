@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+                                   xmlns:app="http://schemas.android.com/apk/res-auto"
+                                   xmlns:tools="http://schemas.android.com/tools"
+                                   android:layout_width="match_parent"
+                                   android:layout_height="wrap_content"
+                                   android:layout_marginVertical="6dp"
+                                   app:cardCornerRadius="8dp"
+                                   app:cardElevation="2dp">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="16dp">
+
+        <!-- Expense Name -->
+        <TextView
+                android:id="@+id/tvExpenseName"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintEnd_toStartOf="@+id/tvAmountLabel"
+                android:layout_marginEnd="16dp"
+                tools:text="Home Loan EMI" />
+
+        <!-- "Amount" Label -->
+        <TextView
+                android:id="@+id/tvAmountLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Amount:"
+                app:layout_constraintEnd_toStartOf="@+id/etExpenseAmount"
+                app:layout_constraintTop_toTopOf="@+id/etExpenseAmount"
+                app:layout_constraintBottom_toBottomOf="@+id/etExpenseAmount"
+                android:layout_marginEnd="8dp"/>
+
+        <!-- Editable Amount -->
+        <EditText
+                android:id="@+id/etExpenseAmount"
+                android:layout_width="100dp"
+                android:layout_height="wrap_content"
+                android:inputType="numberDecimal"
+                android:textAlignment="textEnd"
+                android:textSize="16sp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                tools:text="20000.00" />
+
+        <!-- Status Switch (Paid/Pending) -->
+        <com.google.android.material.switchmaterial.SwitchMaterial
+                android:id="@+id/switchStatus"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="Status: Pending"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/etExpenseAmount" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</androidx.cardview.widget.CardView>

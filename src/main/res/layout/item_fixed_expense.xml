@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:layout_width="match_parent"
+              android:layout_height="wrap_content"
+              android:orientation="horizontal"
+              android:gravity="center_vertical"
+              android:paddingTop="4dp"
+              android:paddingBottom="4dp">
+
+    <EditText
+            android:id="@+id/editTextExpenseName"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:hint="Expense Name (e.g., Rent)"
+            android:inputType="textCapWords"
+            android:background="@drawable/edit_text_background"
+            android:padding="12dp"
+            android:textSize="14sp"
+            android:layout_marginEnd="8dp"/>
+
+    <EditText
+            android:id="@+id/editTextExpenseAmount"
+            android:layout_width="120dp"
+            android:layout_height="wrap_content"
+            android:hint="Amount"
+            android:inputType="numberDecimal"
+            android:background="@drawable/edit_text_background"
+            android:padding="12dp"
+            android:textSize="14sp"/>
+
+</LinearLayout>
