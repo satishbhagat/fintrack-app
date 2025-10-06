@@ -10,12 +10,13 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.fintrack.client.dto.AuthResponse;
 import com.fintrack.client.network.ApiService;
 import com.fintrack.client.network.RetrofitClient;
 import com.fintrack.client.models.RegisterRequest;
-import com.fintrack.client.models.AuthResponse;
 
 import com.fintrack.client.R;
+import com.fintrack.client.utils.UserSession;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -74,7 +75,7 @@ public class RegisterActivity extends AppCompatActivity {
                     Log.d(TAG, "Registration successful: " + response.body());
                     Intent intent = new Intent(RegisterActivity.this, DashboardActivity.class);
                     Log.d(TAG, " Navigating to DashboardActivity with email: " + email);
-                    intent.putExtra("USER_EMAIL", email);
+                    populateUserSession(response);
                     startActivity(intent);
                     finish();
                 } else {
@@ -114,5 +115,12 @@ public class RegisterActivity extends AppCompatActivity {
             return true;
         }
         return false;
+    }
+
+    private void populateUserSession(Response<AuthResponse> response) {
+        UserSession.getInstance().setEmailId(response.body().getEmail());
+        UserSession.getInstance().setUserId(response.body().getUserId());
+        UserSession.getInstance().setSalary(response.body().getSalary());
+        Log.d(TAG, "User session populated: " + UserSession.getInstance());
     }
 }

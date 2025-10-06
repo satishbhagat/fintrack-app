@@ -1,16 +1,13 @@
 package com.fintrack.client.activities;
 
 
+import android.annotation.SuppressLint;
+import android.app.DatePickerDialog;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.LinearLayout;
-import android.widget.Toast;
-
-import androidx.appcompat.app.AppCompatActivity;
+import android.widget.*;
 
 import com.fintrack.client.R;
 import com.fintrack.client.dto.GenericResponse;
@@ -20,23 +17,36 @@ import com.fintrack.client.network.ApiService;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 
+import com.fintrack.client.utils.UserSession;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-public class ProfileActivity extends AppCompatActivity {
+public class ProfileActivity extends BaseActivity {
 
     private EditText editTextSalary;
     private LinearLayout containerFixedExpenses, containerCreditCards;
     private Button buttonAddExpense, buttonAddCard, buttonSaveProfile;
     private ApiService apiService;
 
+    private String emailId;
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_profile);
+        // Inflate the dashboard layout into the BaseActivity's FrameLayout
+        FrameLayout contentFrame = findViewById(R.id.content_frame);
+        View cardView = getLayoutInflater().inflate(R.layout.activity_profile, contentFrame, true);
+        // Find tvDueDate in the inflated cardView
+
+
+        setToolbarTitle("Expenditures");
+
+        emailId = UserSession.getInstance().getEmailId();
 
         apiService = RetrofitClient.getInstance().create(ApiService.class);
 
@@ -46,10 +56,13 @@ public class ProfileActivity extends AppCompatActivity {
         buttonAddExpense = findViewById(R.id.buttonAddExpense);
         buttonAddCard = findViewById(R.id.buttonAddCard);
         buttonSaveProfile = findViewById(R.id.buttonSaveProfile);
+        //set salary
+        editTextSalary.setText(UserSession.getInstance().getSalary().toString());
 
         buttonAddExpense.setOnClickListener(v -> addFixedExpenseView());
         buttonAddCard.setOnClickListener(v -> addCreditCardView());
         buttonSaveProfile.setOnClickListener(v -> saveProfile());
+
     }
 
     private void addFixedExpenseView() {
@@ -61,6 +74,26 @@ public class ProfileActivity extends AppCompatActivity {
     private void addCreditCardView() {
         LayoutInflater inflater = LayoutInflater.from(this);
         View cardView = inflater.inflate(R.layout.item_credit_card, containerCreditCards, false);
+
+        // Find tvDueDate in the inflated cardView
+        TextView tvDueDate = cardView.findViewById(R.id.tvDueDate);
+
+        // Set OnClickListener for tvDueDate
+        tvDueDate.setOnClickListener(v -> {
+            Calendar calendar = Calendar.getInstance();
+            int year = calendar.get(Calendar.YEAR);
+            int month = calendar.get(Calendar.MONTH);
+            int day = calendar.get(Calendar.DAY_OF_MONTH);
+
+            DatePickerDialog datePickerDialog = new DatePickerDialog(this, (view, selectedYear, selectedMonth, selectedDay) -> {
+                String selectedDate = selectedDay + "/" + (selectedMonth + 1) + "/" + selectedYear;
+                tvDueDate.setText(selectedDate);
+            }, year, month, day);
+
+            datePickerDialog.show();
+        });
+
+        // Add the cardView to the container
         containerCreditCards.addView(cardView);
     }
 
@@ -76,11 +109,11 @@ public class ProfileActivity extends AppCompatActivity {
         }
 
         ProfileSetupRequest request = new ProfileSetupRequest();
+        request.setEmailId(emailId);
         request.setMonthlySalary(new BigDecimal(salaryStr));
         request.setFixedExpenditures(getFixedExpensesFromViews());
-        request.setCreditCardNames(getCreditCardsFromViews());
+        request.setCreditCards(getCreditCardsFromViews());
 
-        String authToken = "Bearer " + getIntent().getStringExtra("AUTH_TOKEN");
 
         apiService.setupProfile(request).enqueue(new Callback<GenericResponse>() {
             @Override
@@ -88,8 +121,6 @@ public class ProfileActivity extends AppCompatActivity {
                 if (response.isSuccessful()) {
                     Toast.makeText(ProfileActivity.this, "Profile saved!", Toast.LENGTH_SHORT).show();
                     Intent intent = new Intent(ProfileActivity.this, DashboardActivity.class);
-                    // Pass the token along to the next activity
-                    intent.putExtra("AUTH_TOKEN", getIntent().getStringExtra("AUTH_TOKEN"));
                     startActivity(intent);
                     finish(); // Finish this activity so user can't go back
                 } else {
@@ -108,8 +139,8 @@ public class ProfileActivity extends AppCompatActivity {
         List<ProfileSetupRequest.FixedExpenditureDto> expenses = new ArrayList<>();
         for (int i = 0; i < containerFixedExpenses.getChildCount(); i++) {
             View view = containerFixedExpenses.getChildAt(i);
-            EditText nameEditText = view.findViewById(R.id.editTextExpenseName);
-            EditText amountEditText = view.findViewById(R.id.editTextExpenseAmount);
+            EditText nameEditText = view.findViewById(R.id.spinnerExpenseName);
+            EditText amountEditText = view.findViewById(R.id.etExpenseAmount);
 
             String name = nameEditText.getText().toString();
             String amountStr = amountEditText.getText().toString();
@@ -124,16 +155,33 @@ public class ProfileActivity extends AppCompatActivity {
         return expenses;
     }
 
-    private List<String> getCreditCardsFromViews() {
-        List<String> cardNames = new ArrayList<>();
+    private List<ProfileSetupRequest.CreditCardDto> getCreditCardsFromViews() {
+        List<ProfileSetupRequest.CreditCardDto> cardDtos = new ArrayList<>();
         for (int i = 0; i < containerCreditCards.getChildCount(); i++) {
+            ProfileSetupRequest.CreditCardDto creditCardDto =new ProfileSetupRequest.CreditCardDto();
             View view = containerCreditCards.getChildAt(i);
             EditText cardNameEditText = view.findViewById(R.id.editTextCardName);
             String name = cardNameEditText.getText().toString();
             if (!name.isEmpty()) {
-                cardNames.add(name);
+                creditCardDto.setCardName(name);
+                creditCardDto.setUserId(UserSession.getInstance().getUserId());
             }
+            cardDtos.add(creditCardDto);
         }
-        return cardNames;
+        return cardDtos;
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Highlight the "Home" tab when this activity is visible
+        bottomNavigationView.getMenu().findItem(R.id.nav_spend).setChecked(true);
+    }
+
+    @Override
+    public void setToolbarTitle(String title) {
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setTitle(title);
+        }
     }
 }

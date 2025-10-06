@@ -20,13 +20,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+import com.fintrack.client.utils.UserSession;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
 import static com.fintrack.client.R.*;
 
-public class DashboardActivity extends AppCompatActivity {
+public class DashboardActivity extends BaseActivity {
 
     private static final String TAG = "DashboardActivity";
 
@@ -41,14 +42,20 @@ public class DashboardActivity extends AppCompatActivity {
 
     private TextView tvSavings;
 
-    private Button btnSaveDashboard = findViewById(id.btnSaveDashboard);
+    private Button btnSaveDashboard;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_dashboard);
 
-        String emailId = getIntent().getStringExtra("USER_EMAIL");
+        // Inflate the dashboard layout into the BaseActivity's FrameLayout
+        FrameLayout contentFrame = findViewById(R.id.content_frame);
+        getLayoutInflater().inflate(R.layout.activity_dashboard, contentFrame, true);
+
+        setToolbarTitle("Dashboard");
+
+        String emailId = UserSession.getInstance().getEmailId();
         Log.d(TAG, "Received emailId: " + emailId);
 
         apiService = RetrofitClient.getInstance().create(ApiService.class);
@@ -58,6 +65,7 @@ public class DashboardActivity extends AppCompatActivity {
         tvSavings = findViewById(R.id.tvSavings);
         tvAmountNeeded = findViewById(R.id.tvAmountNeeded);
         tableLayout = findViewById(R.id.tableLayout);
+        btnSaveDashboard = findViewById(R.id.btnSaveDashboard);
 
         // Update the table dynamically
         fetchDashboardData(emailId, tvTotalAmount, tvSavings, tvAmountNeeded);
@@ -210,5 +218,19 @@ public class DashboardActivity extends AppCompatActivity {
         row.addView(spinnerStatus);
 
         tableLayout.addView(row);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Highlight the "Home" tab when this activity is visible
+        bottomNavigationView.getMenu().findItem(R.id.nav_home).setChecked(true);
+    }
+
+    @Override
+    public void setToolbarTitle(String title) {
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setTitle(title);
+        }
     }
 }

@@ -3,10 +3,7 @@ package com.fintrack.client.adapters;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.CompoundButton;
-import android.widget.EditText;
-import android.widget.TextView;
-import android.widget.ToggleButton;
+import android.widget.*;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -77,19 +74,19 @@ public class ExpenseAdapter extends RecyclerView.Adapter<ExpenseAdapter.ExpenseV
 
     class ExpenseViewHolder extends RecyclerView.ViewHolder {
 
-        TextView tvExpenseName;
+        Spinner tvExpenseName;
         EditText etExpenseAmount;
         ToggleButton toggleStatus;
 
         public ExpenseViewHolder(@NonNull View itemView) {
             super(itemView);
-            tvExpenseName = itemView.findViewById(R.id.tvExpenseName);
+            tvExpenseName = itemView.findViewById(R.id.spinnerExpenseName);
             etExpenseAmount = itemView.findViewById(R.id.etExpenseAmount);
             toggleStatus = itemView.findViewById(R.id.switchStatus);
         }
 
         void bind(MonthlyExpense expense) {
-            tvExpenseName.setText(expense.name);
+            tvExpenseName.setSelection(((ArrayAdapter<String>)tvExpenseName.getAdapter()).getPosition(expense.name));
             etExpenseAmount.setText(String.valueOf(expense.amount));
             toggleStatus.setChecked("PAID".equals(expense.status));
 

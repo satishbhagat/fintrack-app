@@ -1,3 +1,44 @@
 <resources>
     <string name="app_name">FinTrack</string>
+
+    <!-- Add these string arrays -->
+    <string-array name="expense_categories">
+        <item>Home Loan EMI</item>
+        <item>Car Loan EMI</item>
+        <item>Personal Loan EMI</item>
+        <item>Rent</item>
+        <item>Maid</item>
+        <item>Cook</item>
+        <item>Groceries</item>
+        <item>Utilities</item>
+        <item>Petrol</item>
+        <item>Commute</item>
+        <item>Other</item>
+    </string-array>
+
+    <string-array name="credit_card_issuers">
+        <item>HDFC Bank</item>
+        <item>ICICI Bank</item>
+        <item>State Bank of India (SBI)</item>
+        <item>Axis Bank</item>
+        <item>Kotak Mahindra Bank</item>
+        <item>American Express</item>
+        <item>Standard Chartered</item>
+        <item>Other</item>
+    </string-array>
+
+    <string-array name="months_of_year">
+        <item>January</item>
+        <item>February</item>
+        <item>March</item>
+        <item>April</item>
+        <item>May</item>
+        <item>June</item>
+        <item>July</item>
+        <item>August</item>
+        <item>September</item>
+        <item>October</item>
+        <item>November</item>
+        <item>December</item>
+    </string-array>
 </resources>
