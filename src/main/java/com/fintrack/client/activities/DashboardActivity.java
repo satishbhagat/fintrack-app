@@ -1,132 +1,89 @@
-// DashboardActivity.java
 package com.fintrack.client.activities;
 
-
+import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
-import android.widget.*;
-
-import androidx.appcompat.app.AppCompatActivity;
-
+import android.widget.TextView;
+import android.widget.Toast;
+import androidx.appcompat.widget.Toolbar;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 import com.fintrack.client.R;
 import com.fintrack.client.adapters.ExpenseAdapter;
-import com.fintrack.client.dto.DashboardRequest;
 import com.fintrack.client.dto.DashboardResponse;
-import com.fintrack.client.network.RetrofitClient;
 import com.fintrack.client.network.ApiService;
+import com.fintrack.client.network.RetrofitClient;
+import com.fintrack.client.utils.UserSession;
+import com.github.mikephil.charting.charts.PieChart;
+import com.github.mikephil.charting.data.PieData;
+import com.github.mikephil.charting.data.PieDataSet;
+import com.github.mikephil.charting.data.PieEntry;
+import com.github.mikephil.charting.utils.ColorTemplate;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-import com.fintrack.client.utils.UserSession;
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
-
-import static com.fintrack.client.R.*;
-
 public class DashboardActivity extends BaseActivity {
 
     private static final String TAG = "DashboardActivity";
 
-    private ExpenseAdapter expensesAdapter;
     private ApiService apiService;
+    private ExpenseAdapter expenseAdapter;
 
-    private TableLayout tableLayout;
-
-    private TextView tvAmountNeeded;
-
-    private TextView tvTotalAmount;
-
-    private TextView tvSavings;
-
-    private Button btnSaveDashboard;
-
+    private TextView tvTotalBalance, tvSavings, tvAmountNeeded;
+    private RecyclerView rvExpenses;
+    private PieChart pieChart;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         // Inflate the dashboard layout into the BaseActivity's FrameLayout
-        FrameLayout contentFrame = findViewById(R.id.content_frame);
-        getLayoutInflater().inflate(R.layout.activity_dashboard, contentFrame, true);
+        // This is handled by the new layout structure, but we need to set the specific content view
+        setContentView(R.layout.activity_dashboard);
+
+        // Re-initialize the toolbar and bottom navigation from the new layout
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+        bottomNavigationView = findViewById(R.id.bottom_navigation);
+        bottomNavigationView.setOnItemSelectedListener(this);
+
 
         setToolbarTitle("Dashboard");
-
-        String emailId = UserSession.getInstance().getEmailId();
-        Log.d(TAG, "Received emailId: " + emailId);
 
         apiService = RetrofitClient.getInstance().create(ApiService.class);
 
         // Bind UI components
-        tvTotalAmount = findViewById(R.id.tvTotalAmount);
+        tvTotalBalance = findViewById(R.id.tvTotalBalance);
         tvSavings = findViewById(R.id.tvSavings);
         tvAmountNeeded = findViewById(R.id.tvAmountNeeded);
-        tableLayout = findViewById(R.id.tableLayout);
-        btnSaveDashboard = findViewById(R.id.btnSaveDashboard);
+        rvExpenses = findViewById(R.id.rvExpenses);
+        pieChart = findViewById(R.id.pieChart);
 
-        // Update the table dynamically
-        fetchDashboardData(emailId, tvTotalAmount, tvSavings, tvAmountNeeded);
+        setupRecyclerView();
 
-        btnSaveDashboard.setOnClickListener(v -> saveExpenses());
-    }
-
-    private void saveExpenses() {
-        List<DashboardRequest.MonthlyExpenseItem> expenses = new ArrayList<>();
-
-        // Iterate through table rows (skip the header row)
-        int childCount = tableLayout.getChildCount();
-        for (int i = 1; i < childCount; i++) { // Start from 1 to skip the header
-            TableRow row = (TableRow) tableLayout.getChildAt(i);
-
-            // Extract data from each column
-            TextView tvName = (TextView) row.getChildAt(1); // Name column
-            TextView tvAmount = (TextView) row.getChildAt(2); // Amount column
-            Spinner spinnerStatus = (Spinner) row.getChildAt(3); // Status column
-
-            String name = tvName.getText().toString();
-            BigDecimal amount = new BigDecimal(tvAmount.getText().toString().replace("₹", "").trim());
-            String status = spinnerStatus.getSelectedItem().toString();
-
-            // Create and add an expense object
-            DashboardRequest.MonthlyExpenseItem expense = new DashboardRequest.MonthlyExpenseItem();
-            expense.setName(name);
-            expense.setAmount(amount);
-            expense.setStatus(status);
-            expenses.add(expense);
+        String emailId = UserSession.getInstance().getEmailId();
+        if (emailId != null) {
+            fetchDashboardData(emailId);
+        } else {
+            Toast.makeText(this, "User session not found.", Toast.LENGTH_LONG).show();
+            // Optionally, redirect to login
         }
-
-        // Create DashboardRequest and set expenses
-        DashboardRequest request = new DashboardRequest();
-        request.setExpenses(expenses);
-        request.setEmailId(getIntent().getStringExtra("USER_EMAIL")); // Assuming email is used as userId
-
-        // Send the request to the backend
-        Call<DashboardResponse> call = apiService.saveDashboard(request);
-        call.enqueue(new Callback<DashboardResponse>() {
-            @Override
-            public void onResponse(Call<DashboardResponse> call, Response<DashboardResponse> response) {
-                if (response.isSuccessful()) {
-                    Toast.makeText(DashboardActivity.this, "Expenses saved successfully!", Toast.LENGTH_SHORT).show();
-                    DashboardResponse data = response.body();
-                    updateUI(data);
-                } else {
-                    Toast.makeText(DashboardActivity.this, "Failed to save expenses.", Toast.LENGTH_SHORT).show();
-                }
-            }
-
-            @Override
-            public void onFailure(Call<DashboardResponse> call, Throwable t) {
-                Toast.makeText(DashboardActivity.this, "An error occurred: " + t.getMessage(), Toast.LENGTH_SHORT).show();
-            }
-        });
     }
 
-    private void fetchDashboardData(String emailId, TextView tvTotalAmount, TextView tvSavings, TextView tvAmountNeeded) {
-        Log.d(TAG, "Fetching dashboard data for emailId: " + emailId);
+    private void setupRecyclerView() {
+        rvExpenses.setLayoutManager(new LinearLayoutManager(this));
+        // Pass an empty list to the adapter initially
+        expenseAdapter = new ExpenseAdapter(new ArrayList<>());
+        rvExpenses.setAdapter(expenseAdapter);
+    }
 
+    private void fetchDashboardData(String emailId) {
+        Log.d(TAG, "Fetching dashboard data for emailId: " + emailId);
         Call<DashboardResponse> call = apiService.getDashboard(emailId);
         call.enqueue(new Callback<DashboardResponse>() {
             @Override
@@ -147,84 +104,59 @@ public class DashboardActivity extends BaseActivity {
     }
 
     private void updateUI(DashboardResponse data) {
-        // Clear existing expense rows (except header)
-        int childCount = tableLayout.getChildCount();
-        if (childCount > 1) {
-            tableLayout.removeViews(1, childCount - 1);
+        // Assume DashboardResponse now includes totalIncome from the backend
+        // If not, you would need another API call to fetch extra incomes and sum them up
+        BigDecimal totalIncome = data.getTotalIncome() != null ? data.getTotalIncome() : data.getMonthlySalry();
+        tvTotalBalance.setText(String.format(Locale.getDefault(), "₹%.2f", totalIncome));
+
+        BigDecimal totalExpenses = data.getTotalExpenses() != null ? data.getTotalExpenses() : BigDecimal.ZERO;
+        // Correct savings calculation
+        BigDecimal savings = totalIncome.subtract(totalExpenses);
+        tvSavings.setText(String.format(Locale.getDefault(), "₹%.2f", savings));
+
+        BigDecimal pendingAmount = data.getPendingAmount() != null ? data.getPendingAmount() : BigDecimal.ZERO;
+        tvAmountNeeded.setText(String.format(Locale.getDefault(), "₹%.2f", pendingAmount));
+
+        if (data.getExpenses() != null) {
+            expenseAdapter.updateExpenses(data.getExpenses());
         }
 
-        // Add expense rows dynamically
-        List<DashboardResponse.MonthlyExpenseItem> expenses = data.getExpenses();
-        for (int i = 0; i < expenses.size(); i++) {
-            DashboardResponse.MonthlyExpenseItem expense = expenses.get(i);
-            String amountStr = String.format(Locale.getDefault(), "₹%.2f", expense.getAmount());
-            String statusStr = expense.getStatus(); // e.g., "Pending" or "Paid"
-            addExpenseRow(i + 1, expense.getName(), amountStr, statusStr);
-        }
-
-        // Update total amount
-        BigDecimal totalAmount = BigDecimal.ZERO;
-        for (DashboardResponse.MonthlyExpenseItem exp : expenses) {
-            totalAmount = totalAmount.add(exp.getAmount());
-        }
-
-        tvTotalAmount.setText(String.format(Locale.getDefault(), "₹%.2f", totalAmount));
-
-        // Update savings and amount needed
-        BigDecimal monthlySalary = data.getMonthlySalry();
-        BigDecimal savings = monthlySalary.subtract(totalAmount);
-        tvSavings.setText(String.format(Locale.getDefault(), "Savings: ₹%.2f", savings));
-
-        BigDecimal pendingAmount = BigDecimal.ZERO;
-        for (DashboardResponse.MonthlyExpenseItem exp : expenses) {
-            if ("Pending".equalsIgnoreCase(exp.getStatus())) {
-                pendingAmount = pendingAmount.add(exp.getAmount());
-            }
-        }
-        tvAmountNeeded.setText(String.format(Locale.getDefault(), "Amount Needed: ₹%.2f", pendingAmount));
+        setupPieChart(data.getExpenses());
     }
 
-    private void addExpenseRow(int index, String name, String amount, String status) {
-        TableRow row = new TableRow(this);
 
-        TextView tvIndex = new TextView(this);
-        tvIndex.setText(String.valueOf(index));
-        tvIndex.setPadding(8, 8, 8, 8);
-
-        TextView tvName = new TextView(this);
-        tvName.setText(name);
-        tvName.setPadding(8, 8, 8, 8);
-
-        TextView tvAmount = new TextView(this);
-        tvAmount.setText(amount);
-        tvAmount.setPadding(8, 8, 8, 8);
-
-        Spinner spinnerStatus = new Spinner(this);
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, new String[]{"Pending", "Paid"});
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinnerStatus.setAdapter(adapter);
-        spinnerStatus.setPadding(8, 8, 8, 8);
-
-        // Set the current status
-        if ("Paid".equalsIgnoreCase(status)) {
-            spinnerStatus.setSelection(1);
-        } else {
-            spinnerStatus.setSelection(0);
+    private void setupPieChart(List<DashboardResponse.MonthlyExpenseItem> expenses) {
+        if (expenses == null || expenses.isEmpty()) {
+            pieChart.clear();
+            pieChart.invalidate();
+            return;
         }
 
-        row.addView(tvIndex);
-        row.addView(tvName);
-        row.addView(tvAmount);
-        row.addView(spinnerStatus);
+        ArrayList<PieEntry> entries = new ArrayList<>();
+        for (DashboardResponse.MonthlyExpenseItem expense : expenses) {
+            entries.add(new PieEntry(expense.getAmount().floatValue(), expense.getName()));
+        }
 
-        tableLayout.addView(row);
+        PieDataSet dataSet = new PieDataSet(entries, "Expense Breakdown");
+        dataSet.setColors(ColorTemplate.MATERIAL_COLORS);
+        dataSet.setValueTextColor(Color.BLACK);
+        dataSet.setValueTextSize(12f);
+
+        PieData pieData = new PieData(dataSet);
+        pieChart.setData(pieData);
+        pieChart.getDescription().setEnabled(false);
+        pieChart.setCenterText("Expenses");
+        pieChart.animateY(1000);
+        pieChart.invalidate();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        // Highlight the "Home" tab when this activity is visible
-        bottomNavigationView.getMenu().findItem(R.id.nav_home).setChecked(true);
+        // Ensure the correct navigation item is selected
+        if (bottomNavigationView != null) {
+            bottomNavigationView.getMenu().findItem(R.id.nav_home).setChecked(true);
+        }
     }
 
     @Override

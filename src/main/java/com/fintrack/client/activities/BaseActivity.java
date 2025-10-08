@@ -1,16 +1,12 @@
 package com.fintrack.client.activities;
 
-
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.MenuItem;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
-
 import com.fintrack.client.R;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.navigation.NavigationBarView;
@@ -22,13 +18,7 @@ public abstract class BaseActivity extends AppCompatActivity implements Navigati
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_base);
-
-        Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-
-        bottomNavigationView = findViewById(R.id.bottom_navigation);
-        bottomNavigationView.setOnItemSelectedListener(this);
+        // Note: The actual layout is set in child activities
     }
 
     @Override
@@ -48,7 +38,7 @@ public abstract class BaseActivity extends AppCompatActivity implements Navigati
         if (itemId == R.id.nav_home) {
             startActivity(new Intent(this, DashboardActivity.class));
         } else if (itemId == R.id.nav_spend) {
-            startActivity(new Intent(this, ProfileActivity.class));
+            startActivity(new Intent(this, SpendActivity.class)); // Changed from ProfileActivity
         }
 
         // Add a slide transition
@@ -57,19 +47,16 @@ public abstract class BaseActivity extends AppCompatActivity implements Navigati
     }
 
     private void logout() {
-        // Clear saved token or session data
         SharedPreferences prefs = getSharedPreferences("FinTrackPrefs", MODE_PRIVATE);
         SharedPreferences.Editor editor = prefs.edit();
         editor.remove("AUTH_TOKEN");
         editor.apply();
 
-        // Navigate to LoginActivity and clear the back stack
         Intent intent = new Intent(this, LoginActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
         finish();
     }
 
-    // Abstract method to be implemented by child activities to set the title
     public abstract void setToolbarTitle(String title);
 }

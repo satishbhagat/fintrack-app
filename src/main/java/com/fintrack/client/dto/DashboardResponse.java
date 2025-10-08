@@ -1,9 +1,9 @@
 package com.fintrack.client.dto;
 
 import com.google.gson.annotations.SerializedName;
+
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.UUID;
 
 public class DashboardResponse {
 
@@ -21,6 +21,7 @@ public class DashboardResponse {
 
     @SerializedName("monthlySalry") // Note the spelling matches JSON
     private BigDecimal monthlySalry;
+    private BigDecimal totalIncome;
 
     // Getters and setters
     public List<MonthlyExpenseItem> getExpenses() {
@@ -61,6 +62,13 @@ public class DashboardResponse {
 
     public void setMonthlySalry(BigDecimal monthlySalry) {
         this.monthlySalry = monthlySalry;
+    }
+
+    public BigDecimal getTotalIncome() {
+        return totalIncome;
+    }
+    public void setTotalIncome(BigDecimal totalIncome) {
+        this.totalIncome = totalIncome;
     }
 
     /**

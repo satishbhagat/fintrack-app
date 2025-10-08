@@ -1,32 +1,46 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
               android:layout_width="match_parent"
               android:layout_height="wrap_content"
-              android:orientation="horizontal"
-              android:gravity="center_vertical"
+              android:orientation="vertical"
               android:paddingTop="4dp"
               android:paddingBottom="4dp">
 
-    <Spinner
-            android:id="@+id/editTextCardName"
-            android:layout_width="0dp"
+    <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:background="@drawable/edit_text_background"
-            android:padding="12dp"
-            android:textSize="14sp"
-            android:entries="@array/credit_card_issuers"
-            android:layout_marginEnd="8dp" />
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
 
-    <TextView
-            android:id="@+id/tvDueDate"
-            android:layout_width="120dp"
+        <Spinner
+                android:id="@+id/spinnerCardName"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:background="@drawable/edit_text_background"
+                android:padding="12dp"
+                android:textSize="14sp"
+                android:entries="@array/credit_card_issuers"
+                android:layout_marginEnd="8dp" />
+
+        <TextView
+                android:id="@+id/tvDueDate"
+                android:layout_width="120dp"
+                android:layout_height="wrap_content"
+                android:background="@drawable/edit_text_background"
+                android:padding="12dp"
+                android:textSize="14sp"
+                android:gravity="center"
+                android:text="Due Date"
+                android:clickable="true"
+                android:focusable="true" />
+    </LinearLayout>
+
+    <EditText
+            android:id="@+id/etOtherCreditCard"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@drawable/edit_text_background"
-            android:padding="12dp"
-            android:textSize="14sp"
-            android:gravity="center"
-            android:text="Select Date"
-            android:clickable="true"
-            android:focusable="true" />
+            android:hint="Enter card issuer name"
+            android:visibility="gone"
+            android:layout_marginTop="8dp"/>
 
 </LinearLayout>

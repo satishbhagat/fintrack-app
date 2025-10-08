@@ -3,11 +3,10 @@ package com.fintrack.client.adapters;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.*;
-
+import android.widget.EditText;
+import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
-
 import com.fintrack.client.R;
 import com.fintrack.client.dto.DashboardResponse;
 import com.fintrack.client.dto.GenericResponse;
@@ -15,25 +14,23 @@ import com.fintrack.client.models.MonthlyExpense;
 import com.fintrack.client.models.UpdateExpenseRequest;
 import com.fintrack.client.network.ApiService;
 import com.fintrack.client.network.RetrofitClient;
+import com.google.android.material.switchmaterial.SwitchMaterial;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
 
 public class ExpenseAdapter extends RecyclerView.Adapter<ExpenseAdapter.ExpenseViewHolder> {
 
     private List<MonthlyExpense> expenses = new ArrayList<>();
     private ApiService apiService;
 
-    public ExpenseAdapter() {
+    public ExpenseAdapter(ArrayList<MonthlyExpense> expenses) {
+        this.expenses = expenses;
         apiService = RetrofitClient.getInstance().create(ApiService.class);
-    }
-
-    public ExpenseAdapter(ArrayList<Object> objects) {
     }
 
     public void setExpenses(List<MonthlyExpense> expenses) {
@@ -74,21 +71,21 @@ public class ExpenseAdapter extends RecyclerView.Adapter<ExpenseAdapter.ExpenseV
 
     class ExpenseViewHolder extends RecyclerView.ViewHolder {
 
-        Spinner tvExpenseName;
+        TextView tvExpenseName;
         EditText etExpenseAmount;
-        ToggleButton toggleStatus;
+        SwitchMaterial switchStatus; // Changed from ToggleButton
 
         public ExpenseViewHolder(@NonNull View itemView) {
             super(itemView);
-            tvExpenseName = itemView.findViewById(R.id.spinnerExpenseName);
+            tvExpenseName = itemView.findViewById(R.id.tvExpenseName);
             etExpenseAmount = itemView.findViewById(R.id.etExpenseAmount);
-            toggleStatus = itemView.findViewById(R.id.switchStatus);
+            switchStatus = itemView.findViewById(R.id.switchStatus); // Correctly cast
         }
 
         void bind(MonthlyExpense expense) {
-            tvExpenseName.setSelection(((ArrayAdapter<String>)tvExpenseName.getAdapter()).getPosition(expense.name));
+            tvExpenseName.setText(expense.name);
             etExpenseAmount.setText(String.valueOf(expense.amount));
-            toggleStatus.setChecked("PAID".equals(expense.status));
+            switchStatus.setChecked("PAID".equals(expense.status));
 
             // Listeners
             etExpenseAmount.setOnFocusChangeListener((v, hasFocus) -> {
@@ -98,7 +95,7 @@ public class ExpenseAdapter extends RecyclerView.Adapter<ExpenseAdapter.ExpenseV
                 }
             });
 
-            toggleStatus.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            switchStatus.setOnCheckedChangeListener((buttonView, isChecked) -> {
                 String newStatus = isChecked ? "PAID" : "PENDING";
                 updateExpenseStatus(expense.id.toString(), newStatus);
             });
@@ -108,26 +105,18 @@ public class ExpenseAdapter extends RecyclerView.Adapter<ExpenseAdapter.ExpenseV
             UpdateExpenseRequest request = new UpdateExpenseRequest();
             request.amount = amount;
             request.status = null; // no change
-            apiService.updateExpense(expenseId, request).enqueue(new Callback() {
+            apiService.updateExpense(expenseId, request).enqueue(new Callback<GenericResponse>() {
                 @Override
-                public void onResponse(Call call, Response response) {
-                    // implement success here
+                public void onResponse(Call<GenericResponse> call, Response<GenericResponse> response) {
                     if (response.isSuccessful()) {
-                        GenericResponse genericResponse = (GenericResponse) response.body();
-                        if (genericResponse != null) {
-                            // Optionally handle the response message
-                           genericResponse.getMessage();
-                        }
+                        // Handle success
                     }
-
                 }
 
                 @Override
-                public void onFailure(Call call, Throwable throwable) {
-                    // implement failure here
-                    throwable.printStackTrace();
+                public void onFailure(Call<GenericResponse> call, Throwable t) {
+                    // Handle failure
                 }
-
             });
         }
 
@@ -135,25 +124,18 @@ public class ExpenseAdapter extends RecyclerView.Adapter<ExpenseAdapter.ExpenseV
             UpdateExpenseRequest request = new UpdateExpenseRequest();
             request.amount = null; // no change
             request.status = status;
-            apiService.updateExpense(expenseId, request).enqueue(new Callback() {
+            apiService.updateExpense(expenseId, request).enqueue(new Callback<GenericResponse>() {
                 @Override
-                public void onResponse(Call call, Response response) {
-                    //write implementation here
+                public void onResponse(Call<GenericResponse> call, Response<GenericResponse> response) {
                     if (response.isSuccessful()) {
-                        GenericResponse genericResponse = (GenericResponse) response.body();
-                        if (genericResponse != null) {
-                            // Optionally handle the response message
-                             genericResponse.getMessage();
-                        }
+                        // Handle success
                     }
                 }
 
                 @Override
-                public void onFailure(Call call, Throwable throwable) {
-                    //write implementation here
-                    throwable.printStackTrace();
+                public void onFailure(Call<GenericResponse> call, Throwable t) {
+                    // Handle failure
                 }
-
             });
         }
     }

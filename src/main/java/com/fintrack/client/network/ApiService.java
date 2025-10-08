@@ -29,4 +29,7 @@ public interface ApiService {
 
     @POST("api/v1/dashboard/save")
     Call<DashboardResponse> saveDashboard(@Body DashboardRequest dashboardRequest);
+
+    @POST("api/v1/incomes/add")
+    Call<GenericResponse> addExtraIncome(@Body AddIncomeRequest request);
 }
