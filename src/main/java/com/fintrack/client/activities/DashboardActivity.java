@@ -7,6 +7,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AlertDialog;
@@ -17,17 +18,18 @@ import com.fintrack.client.R;
 import com.fintrack.client.adapters.ExpenseAdapter;
 import com.fintrack.client.dto.DashboardResponse;
 import com.fintrack.client.dto.GenericResponse;
+import com.fintrack.client.models.AbstractExpenseItem;
 import com.fintrack.client.models.AddMonthlyExpenseRequest;
-import com.fintrack.client.models.MonthlyExpense;
 import com.fintrack.client.network.ApiService;
 import com.fintrack.client.network.RetrofitClient;
 import com.fintrack.client.utils.UserSession;
 import com.github.mikephil.charting.charts.PieChart;
+import com.github.mikephil.charting.components.Legend;
 import com.github.mikephil.charting.data.PieData;
 import com.github.mikephil.charting.data.PieDataSet;
 import com.github.mikephil.charting.data.PieEntry;
+import com.github.mikephil.charting.formatter.PercentFormatter;
 import com.github.mikephil.charting.utils.ColorTemplate;
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -46,7 +48,7 @@ public class DashboardActivity extends BaseActivity {
     private TextView tvTotalBalance, tvSavings, tvAmountNeeded;
     private RecyclerView rvExpenses;
     private PieChart pieChart;
-    private FloatingActionButton fabAddExpense;
+    private ImageButton btnAddExpense;
     private String emailId;
 
 
@@ -57,6 +59,7 @@ public class DashboardActivity extends BaseActivity {
 
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
         bottomNavigationView = findViewById(R.id.bottom_navigation);
         bottomNavigationView.setOnItemSelectedListener(this);
 
@@ -70,11 +73,11 @@ public class DashboardActivity extends BaseActivity {
         tvAmountNeeded = findViewById(R.id.tvAmountNeeded);
         rvExpenses = findViewById(R.id.rvExpenses);
         pieChart = findViewById(R.id.pieChart);
-        fabAddExpense = findViewById(R.id.fabAddExpense);
+        btnAddExpense = findViewById(R.id.btnAddExpense);
 
         setupRecyclerView();
 
-        fabAddExpense.setOnClickListener(v -> showAddExpenseDialog());
+        btnAddExpense.setOnClickListener(v -> showAddExpenseDialog());
 
         emailId = UserSession.getInstance().getEmailId();
         if (emailId != null) {
@@ -105,10 +108,9 @@ public class DashboardActivity extends BaseActivity {
             }
 
             AddMonthlyExpenseRequest request = new AddMonthlyExpenseRequest();
-           request.setName(name);
-           request.setUserId(UserSession.getInstance().getUserId());
-           request.setAmount(Double.parseDouble(amountStr));
-           request.setStatus("PENDING");
+            request.name = name;
+            request.amount = Double.parseDouble(amountStr);
+            request.status = "PENDING";
             // Set month to today's date
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
             request.month = sdf.format(Calendar.getInstance().getTime());
@@ -119,29 +121,25 @@ public class DashboardActivity extends BaseActivity {
                     if (response.isSuccessful()) {
                         Toast.makeText(DashboardActivity.this, "Expense added successfully!", Toast.LENGTH_SHORT).show();
 
-                        // Optimistic UI Update for instant feedback
                         DashboardResponse.MonthlyExpenseItem newItem = new DashboardResponse.MonthlyExpenseItem();
                         newItem.setName(name);
                         newItem.setAmount(new BigDecimal(amountStr));
                         newItem.setStatus("PENDING");
-
                         newItem.setId(UUID.randomUUID().toString()); // Placeholder ID
 
                         expenseAdapter.addExpense(newItem);
-                        rvExpenses.scrollToPosition(0); // Scroll to the new item at the top
+                        rvExpenses.scrollToPosition(0);
 
-                        // Convert adapter's list and update pie chart immediately
-                        List<MonthlyExpense> optimisticList = expenseAdapter.getCurrentExpenses();
+                        List<AbstractExpenseItem> optimisticList = expenseAdapter.getCurrentExpenses();
                         List<DashboardResponse.MonthlyExpenseItem> chartList = new ArrayList<>();
-                        for (MonthlyExpense expense : optimisticList) {
+                        for (AbstractExpenseItem expense : optimisticList) {
                             DashboardResponse.MonthlyExpenseItem item = new DashboardResponse.MonthlyExpenseItem();
-                            item.setName(expense.name);
-                            item.setAmount(BigDecimal.valueOf(expense.amount));
+                            item.setName(expense.getName());
+                            item.setAmount(expense.getAmount());
                             chartList.add(item);
                         }
                         setupPieChart(chartList);
 
-                        // Fetch authoritative data from server to update totals and get real ID
                         fetchDashboardData(emailId);
                     } else {
                         Toast.makeText(DashboardActivity.this, "Failed to add expense.", Toast.LENGTH_SHORT).show();
@@ -164,7 +162,6 @@ public class DashboardActivity extends BaseActivity {
 
     private void setupRecyclerView() {
         rvExpenses.setLayoutManager(new LinearLayoutManager(this));
-        // Pass an empty list to the adapter initially
         expenseAdapter = new ExpenseAdapter(new ArrayList<>());
         rvExpenses.setAdapter(expenseAdapter);
     }
@@ -201,11 +198,21 @@ public class DashboardActivity extends BaseActivity {
         BigDecimal pendingAmount = data.getPendingAmount() != null ? data.getPendingAmount() : BigDecimal.ZERO;
         tvAmountNeeded.setText(String.format(Locale.getDefault(), "₹%.2f", pendingAmount));
 
-        if (data.getExpenses() != null) {
-            expenseAdapter.updateExpenses(data.getExpenses());
-        }
+        expenseAdapter.updateExpenses(data.getExpenses(), data.getFixedExpenditures());
 
-        setupPieChart(data.getExpenses());
+        List<DashboardResponse.MonthlyExpenseItem> combinedListForChart = new ArrayList<>();
+        if (data.getExpenses() != null) {
+            combinedListForChart.addAll(data.getExpenses());
+        }
+        if (data.getFixedExpenditures() != null) {
+            for(DashboardResponse.FixedExpenditureItem fixedItem : data.getFixedExpenditures()) {
+                DashboardResponse.MonthlyExpenseItem chartItem = new DashboardResponse.MonthlyExpenseItem();
+                chartItem.setName(fixedItem.getName());
+                chartItem.setAmount(fixedItem.getAmount());
+                combinedListForChart.add(chartItem);
+            }
+        }
+        setupPieChart(combinedListForChart);
     }
 
     private void setupPieChart(List<DashboardResponse.MonthlyExpenseItem> expenses) {
@@ -220,18 +227,47 @@ public class DashboardActivity extends BaseActivity {
             entries.add(new PieEntry(expense.getAmount().floatValue(), expense.getName()));
         }
 
-        PieDataSet dataSet = new PieDataSet(entries, "Expense Breakdown");
+        PieDataSet dataSet = new PieDataSet(entries, "");
         dataSet.setColors(ColorTemplate.MATERIAL_COLORS);
-        dataSet.setValueTextColor(Color.BLACK);
-        dataSet.setValueTextSize(12f);
+        dataSet.setSliceSpace(3f);
+        dataSet.setValueLinePart1OffsetPercentage(80.f);
+        dataSet.setValueLinePart1Length(0.5f);
+        dataSet.setValueLinePart2Length(0.2f);
+        dataSet.setYValuePosition(PieDataSet.ValuePosition.OUTSIDE_SLICE);
+
+
+        pieChart.setUsePercentValues(true);
+        pieChart.getDescription().setEnabled(false);
+        pieChart.setExtraOffsets(5, 10, 5, 5);
+        pieChart.setDrawHoleEnabled(true);
+        pieChart.setHoleColor(Color.WHITE);
+        pieChart.setTransparentCircleRadius(61f);
+        pieChart.setCenterText("Expenses");
+        pieChart.setCenterTextSize(16f);
+
 
         PieData pieData = new PieData(dataSet);
+        pieData.setValueTextSize(10f);
+        pieData.setValueTextColor(Color.BLACK);
+        pieData.setValueFormatter(new PercentFormatter(pieChart));
+
         pieChart.setData(pieData);
-        pieChart.getDescription().setEnabled(false);
-        pieChart.setCenterText("Expenses");
+
+        Legend legend = pieChart.getLegend();
+        legend.setVerticalAlignment(Legend.LegendVerticalAlignment.TOP);
+        legend.setHorizontalAlignment(Legend.LegendHorizontalAlignment.LEFT);
+        legend.setOrientation(Legend.LegendOrientation.VERTICAL);
+        legend.setDrawInside(false);
+        legend.setXEntrySpace(7f);
+        legend.setYEntrySpace(0f);
+        legend.setYOffset(0f);
+        legend.setWordWrapEnabled(true);
+
+
         pieChart.animateY(1000);
         pieChart.invalidate();
     }
+
 
     @Override
     protected void onResume() {
