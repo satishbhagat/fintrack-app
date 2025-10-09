@@ -29,6 +29,16 @@ public class DashboardResponse {
     private BigDecimal totalIncome;
 
     // Getters and setters
+
+
+    public List<FixedExpenditureItem> getFixedExpenditures() {
+        return fixedExpenditures;
+    }
+
+    public void setFixedExpenditures(List<FixedExpenditureItem> fixedExpenditures) {
+        this.fixedExpenditures = fixedExpenditures;
+    }
+
     public List<MonthlyExpenseItem> getExpenses() {
         return expenses;
     }
