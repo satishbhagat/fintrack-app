@@ -32,4 +32,7 @@ public interface ApiService {
 
     @POST("api/v1/incomes/add")
     Call<GenericResponse> addExtraIncome(@Body AddIncomeRequest request);
+
+    @POST("api/v1/expenses/monthly")
+    Call<GenericResponse> addMonthlyExpense(@Body AddMonthlyExpenseRequest request);
 }

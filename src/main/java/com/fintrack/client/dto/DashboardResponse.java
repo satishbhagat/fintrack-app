@@ -3,12 +3,17 @@ package com.fintrack.client.dto;
 import com.google.gson.annotations.SerializedName;
 
 import java.math.BigDecimal;
+import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.UUID;
 
 public class DashboardResponse {
 
-    @SerializedName("expenses")
+    @SerializedName("monthExpenses")
     private List<MonthlyExpenseItem> expenses;
+
+    @SerializedName("fixedExpenditures")
+    private List<FixedExpenditureItem> fixedExpenditures;
 
     @SerializedName("totalExpenses")
     private BigDecimal totalExpenses;
@@ -70,6 +75,80 @@ public class DashboardResponse {
     public void setTotalIncome(BigDecimal totalIncome) {
         this.totalIncome = totalIncome;
     }
+
+
+    /**
+     * Inner class representing fixed expense item.
+     */
+
+    public static class FixedExpenditureItem {
+        @SerializedName("id")
+        private String id;
+        @SerializedName("name")
+        private String name;
+        @SerializedName("amount")
+        private Double amount;
+        @SerializedName("createdAt")
+        private OffsetDateTime createdAt;
+
+        @SerializedName("active")
+        private boolean active;
+
+        @SerializedName("userId")
+        private UUID userId;
+
+        // Getters and setters
+
+        public String getId() {
+            return id;
+        }
+
+        public void setId(String id) {
+            this.id = id;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        public Double getAmount() {
+            return amount;
+        }
+
+        public void setAmount(Double amount) {
+            this.amount = amount;
+        }
+
+        public OffsetDateTime getCreatedAt() {
+            return createdAt;
+        }
+
+        public void setCreatedAt(OffsetDateTime createdAt) {
+            this.createdAt = createdAt;
+        }
+
+        public boolean isActive() {
+            return active;
+        }
+
+        public void setActive(boolean active) {
+            this.active = active;
+        }
+
+        public UUID getUserId() {
+            return userId;
+        }
+
+        public void setUserId(UUID userId) {
+            this.userId = userId;
+        }
+    }
+
+
 
     /**
      * Inner class representing each expense item.
