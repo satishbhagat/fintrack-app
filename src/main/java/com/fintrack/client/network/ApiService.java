@@ -13,7 +13,7 @@ public interface ApiService {
     Call<AuthResponse> register(@Body RegisterRequest request);
 
     @PUT("api/v1/expenses/monthly/{id}")
-    Call<GenericResponse> updateExpense(@Path("id") String expenseId, @Body UpdateExpenseRequest request);
+    Call<Void> updateExpense(@Path("id") String expenseId, @Body UpdateExpenseRequest request);
 
     @POST("api/v1/cards")
     Call<CreditCard> addCreditCard(@Body AddCreditCardRequest request);
@@ -34,5 +34,5 @@ public interface ApiService {
     Call<GenericResponse> addExtraIncome(@Body AddIncomeRequest request);
 
     @POST("api/v1/expenses/monthly")
-    Call<GenericResponse> addMonthlyExpense(@Body AddMonthlyExpenseRequest request);
+    Call<MonthlyExpense> addMonthlyExpense(@Body AddMonthlyExpenseRequest request);
 }

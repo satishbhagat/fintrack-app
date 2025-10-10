@@ -4,6 +4,7 @@ import com.fintrack.client.models.AbstractExpenseItem;
 import com.google.gson.annotations.SerializedName;
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.UUID;
 
 public class DashboardResponse {
 
@@ -56,7 +57,7 @@ public class DashboardResponse {
     public static class MonthlyExpenseItem extends AbstractExpenseItem {
 
         @SerializedName("id")
-        private String id;
+        private UUID id;
 
         @SerializedName("name")
         private String name;
@@ -79,9 +80,9 @@ public class DashboardResponse {
 
         // Implemented methods from AbstractExpenseItem
         @Override
-        public String getId() { return id; }
+        public UUID getId() { return this.id; }
         @Override
-        public void setId(String id) { this.id = id; }
+        public void setId(UUID id) { this.id = id; }
 
         @Override
         public String getName() { return name; }
@@ -115,7 +116,7 @@ public class DashboardResponse {
     public static class FixedExpenditureItem extends AbstractExpenseItem {
 
         @SerializedName("id")
-        private String id;
+        private UUID id;
 
         @SerializedName("name")
         private String name;
@@ -128,9 +129,9 @@ public class DashboardResponse {
 
         // Implemented methods from AbstractExpenseItem
         @Override
-        public String getId() { return id; }
+        public UUID getId() { return id; }
         @Override
-        public void setId(String id) { this.id = id; }
+        public void setId(UUID id) { this.id = id; }
 
         @Override
         public String getName() { return name; }
