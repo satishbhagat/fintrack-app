@@ -6,74 +6,80 @@
                 android:background="@drawable/dashboard_background"
                 tools:context=".activities.DashboardActivity">
 
+    <!-- Header Graphic -->
     <ImageView
             android:layout_width="match_parent"
-            android:layout_height="280dp"
+            android:layout_height="220dp"
             android:src="@drawable/dashboard_header_graphic"
             android:scaleType="centerCrop"
             android:layout_alignParentTop="true"/>
 
-    <com.google.android.material.appbar.AppBarLayout
-            android:id="@+id/appbar"
+    <androidx.appcompat.widget.Toolbar
+            android:id="@+id/toolbar"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_alignParentTop="true"
+            android:layout_height="?attr/actionBarSize"
             android:background="@android:color/transparent"
-            app:elevation="0dp">
+            android:elevation="4dp"
+            android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
+            app:popupTheme="@style/ThemeOverlay.AppCompat.Light">
 
-        <androidx.appcompat.widget.Toolbar
-                android:id="@+id/toolbar"
-                android:layout_width="match_parent"
-                android:layout_height="?attr/actionBarSize"
-                app:title="Dashboard"
-                app:titleTextColor="?attr/colorOnPrimaryContainer"/>
+        <TextView
+                android:id="@+id/toolbar_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:textColor="@android:color/white"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                tools:text="Dashboard" />
 
-    </com.google.android.material.appbar.AppBarLayout>
+    </androidx.appcompat.widget.Toolbar>
 
     <androidx.core.widget.NestedScrollView
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_below="@id/appbar"
-            android:layout_above="@+id/bottom_navigation">
+            android:layout_above="@+id/bottom_navigation"
+            android:layout_below="@id/toolbar">
 
         <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="16dp"
-                android:clipToPadding="false">
+                android:padding="16dp">
 
             <!-- Summary Card -->
             <com.google.android.material.card.MaterialCardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    app:cardElevation="4dp"
-                    app:cardCornerRadius="12dp">
+                    app:cardElevation="8dp"
+                    app:cardCornerRadius="16dp"
+                    android:background="@drawable/summary_card_background">
 
                 <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="vertical"
-                        android:background="@drawable/summary_card_background"
                         android:padding="16dp">
 
                     <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="Total Income"
+                            android:textColor="@color/primary"
                             android:textAppearance="?attr/textAppearanceCaption" />
 
                     <TextView
-                            android:id="@+id/tvTotalBalance"
+                            android:id="@+id/tvTotalIncome"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
+                            android:textColor="@color/primary"
                             android:textAppearance="?attr/textAppearanceHeadline4"
                             tools:text="₹50,000.00" />
 
                     <View
                             android:layout_width="match_parent"
                             android:layout_height="1dp"
-                            android:background="?android:attr/listDivider"
+                            android:background="#40FFFFFF"
                             android:layout_marginTop="16dp"
                             android:layout_marginBottom="16dp"/>
 
@@ -92,12 +98,14 @@
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:text="Savings"
+                                    android:textColor="@color/primary"
                                     android:textAppearance="?attr/textAppearanceCaption" />
 
                             <TextView
                                     android:id="@+id/tvSavings"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
+                                    android:textColor="@color/primary"
                                     android:textAppearance="?attr/textAppearanceHeadline6"
                                     tools:text="₹15,000.00" />
                         </LinearLayout>
@@ -113,18 +121,52 @@
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:text="Amount Needed"
+                                    android:textColor="@color/primary"
                                     android:textAppearance="?attr/textAppearanceCaption" />
 
                             <TextView
                                     android:id="@+id/tvAmountNeeded"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
+                                    android:textColor="@color/primary"
                                     android:textAppearance="?attr/textAppearanceHeadline6"
                                     tools:text="₹5,000.00" />
                         </LinearLayout>
                     </LinearLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
+
+            <!-- Month Selector -->
+            <LinearLayout
+                    android:id="@+id/month_selector_container"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginTop="24dp"
+                    android:gravity="center_vertical"
+                    android:padding="8dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:background="?attr/selectableItemBackground">
+
+                <TextView
+                        android:id="@+id/tvSelectedMonth"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        tools:text="October 2025"
+                        android:textColor="@color/primary"
+                        android:textSize="18sp"
+                        android:textStyle="bold"/>
+
+                <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_arrow_drop_down"
+                        android:layout_marginStart="8dp"
+                        app:tint="@color/primary" />
+
+            </LinearLayout>
 
             <!-- Expense Breakdown Chart -->
             <com.github.mikephil.charting.charts.PieChart
@@ -133,21 +175,23 @@
                     android:layout_height="250dp"
                     android:layout_marginTop="16dp" />
 
+            <!-- Recent Transactions Header -->
             <RelativeLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
+                    android:layout_marginTop="24dp"
                     android:background="@drawable/transactions_header_background"
-                    android:elevation="2dp"
-                    android:padding="12dp">
+                    android:padding="16dp"
+                    android:elevation="4dp">
 
                 <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Recent Transactions"
                         android:textAppearance="?attr/textAppearanceHeadline6"
+                        android:layout_alignParentStart="true"
                         android:layout_centerVertical="true"
-                        android:layout_alignParentStart="true"/>
+                        android:textColor="?android:attr/textColorPrimary"/>
 
                 <ImageButton
                         android:id="@+id/btnAddExpense"
@@ -166,7 +210,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
-                    tools:listitem="@layout/item_expense"/>
+                    tools:listitem="@layout/item_expense" />
 
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
@@ -176,7 +220,6 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_alignParentBottom="true"
-            android:background="?android:attr/windowBackground"
             app:menu="@menu/bottom_nav" />
 
 </RelativeLayout>

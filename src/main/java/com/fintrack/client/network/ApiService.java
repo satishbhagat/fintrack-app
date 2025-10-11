@@ -22,7 +22,7 @@ public interface ApiService {
     Call<AuthResponse> loginUser(@Body AuthRequest authRequest);
 
     @GET("api/v1/dashboard")
-    Call<DashboardResponse> getDashboard(@Query("emailId") String emailId);
+    Call<DashboardResponse> getDashboard(@Query("emailId") String emailId, @Query("year") int year, @Query("month") int month);
 
     @POST("api/v1/profile/setup")
     Call<GenericResponse> setupProfile( @Body ProfileSetupRequest request);
@@ -31,8 +31,11 @@ public interface ApiService {
     Call<DashboardResponse> saveDashboard(@Body DashboardRequest dashboardRequest);
 
     @POST("api/v1/incomes/add")
-    Call<GenericResponse> addExtraIncome(@Body AddIncomeRequest request);
+    Call<GenericResponse> addExtraIncome(@Body ExtraIncome request);
 
     @POST("api/v1/expenses/monthly")
     Call<MonthlyExpense> addMonthlyExpense(@Body AddMonthlyExpenseRequest request);
+
+    @POST("api/v1/user/change-password")
+    Call<GenericResponse> changePassword(@Body ChangePasswordRequest request);
 }

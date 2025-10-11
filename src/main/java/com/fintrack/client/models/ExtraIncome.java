@@ -11,6 +11,7 @@ public class ExtraIncome {
     public double amount;
     public String description;
     public String incomeMonth; // e.g., "2025-09-01"
+    public boolean isRecurring;
     public Instant createdAt;
 
     public Instant getCreatedAt() {
@@ -19,5 +20,17 @@ public class ExtraIncome {
 
     public void setCreatedAt(Instant createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public void setAmount(double amount) {
+        this.amount = amount;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public void setIncomeMonth(String incomeMonth) {
+        this.incomeMonth = incomeMonth;
     }
 }

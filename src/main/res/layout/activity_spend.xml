@@ -1,11 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
                 xmlns:app="http://schemas.android.com/apk/res-auto"
                 xmlns:tools="http://schemas.android.com/tools"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:background="?attr/colorSurface"
+                android:background="@drawable/spend_background"
                 tools:context=".activities.SpendActivity">
 
+    <!-- Main Content Area -->
     <androidx.coordinatorlayout.widget.CoordinatorLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
@@ -14,15 +16,15 @@
         <com.google.android.material.appbar.AppBarLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="?attr/colorSurface"
+                android:background="@android:color/transparent"
                 app:elevation="0dp">
 
-            <com.google.android.material.appbar.MaterialToolbar
+            <androidx.appcompat.widget.Toolbar
                     android:id="@+id/toolbar"
                     android:layout_width="match_parent"
                     android:layout_height="?attr/actionBarSize"
-                    app:title="Manage Finances"
-                    app:titleTextColor="?attr/colorOnSurface" />
+                    app:title="Manage Spending"
+                    app:titleTextColor="@android:color/white" />
 
         </com.google.android.material.appbar.AppBarLayout>
 
@@ -37,12 +39,13 @@
                     android:orientation="vertical"
                     android:padding="16dp">
 
-                <!-- Income Section -->
+                <!-- Salary Card -->
                 <com.google.android.material.card.MaterialCardView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        app:cardElevation="2dp"
-                        app:cardCornerRadius="12dp">
+                        app:cardElevation="4dp"
+                        app:cardCornerRadius="16dp"
+                        app:cardBackgroundColor="#B3FFFFFF">
                     <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
@@ -51,33 +54,121 @@
                         <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Primary Income"
-                                android:textAppearance="?attr/textAppearanceHeadline6" />
+                                android:text="Your Primary Income"
+                                android:textAppearance="?attr/textAppearanceHeadline6"
+                                android:textColor="?attr/colorOnSurface" />
+                        <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Update your main monthly salary."
+                                android:textAppearance="?attr/textAppearanceBody2"
+                                android:layout_marginTop="4dp"/>
                         <com.google.android.material.textfield.TextInputLayout
                                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="8dp"
-                                android:hint="Monthly Salary"
-                                app:prefixText="₹"
-                                app:prefixTextAppearance="@style/TextAppearance.AppCompat.Medium">
+                                android:layout_marginTop="16dp"
+                                android:hint="Monthly Salary Amount">
                             <com.google.android.material.textfield.TextInputEditText
-                                    android:id="@+id/etSalary"
+                                    android:id="@+id/editTextSalary"
                                     android:layout_width="match_parent"
                                     android:layout_height="wrap_content"
-                                    android:inputType="numberDecimal"
-                                    tools:text="50000" />
+                                    android:inputType="numberDecimal" />
                         </com.google.android.material.textfield.TextInputLayout>
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
-                <!-- Additional Income Section -->
+                <!-- Fixed Expenses Card -->
                 <com.google.android.material.card.MaterialCardView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="16dp"
-                        app:cardElevation="2dp"
-                        app:cardCornerRadius="12dp">
+                        app:cardElevation="4dp"
+                        app:cardCornerRadius="16dp"
+                        app:cardBackgroundColor="#B3FFFFFF">
+                    <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:padding="16dp">
+                        <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal"
+                                android:gravity="center_vertical">
+                            <TextView
+                                    android:layout_width="0dp"
+                                    android:layout_weight="1"
+                                    android:layout_height="wrap_content"
+                                    android:text="Recurring Bills &amp; EMIs"
+                                    android:textAppearance="?attr/textAppearanceHeadline6"
+                                    android:textColor="?attr/colorOnSurface" />
+                            <Button
+                                    android:id="@+id/buttonAddExpense"
+                                    style="@style/Widget.MaterialComponents.Button.TextButton"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="+ Add New" />
+                        </LinearLayout>
+                        <LinearLayout
+                                android:id="@+id/containerFixedExpenses"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="vertical"
+                                android:layout_marginTop="8dp"/>
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- Credit Cards Card -->
+                <com.google.android.material.card.MaterialCardView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        app:cardElevation="4dp"
+                        app:cardCornerRadius="16dp"
+                        app:cardBackgroundColor="#B3FFFFFF">
+                    <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:padding="16dp">
+
+                        <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal"
+                                android:gravity="center_vertical">
+                            <TextView
+                                    android:layout_width="0dp"
+                                    android:layout_weight="1"
+                                    android:layout_height="wrap_content"
+                                    android:text="Credit Card Due Dates"
+                                    android:textAppearance="?attr/textAppearanceHeadline6"
+                                    android:textColor="?attr/colorOnSurface" />
+                            <Button
+                                    android:id="@+id/buttonAddCard"
+                                    style="@style/Widget.MaterialComponents.Button.TextButton"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="+ Add New" />
+                        </LinearLayout>
+                        <LinearLayout
+                                android:id="@+id/containerCreditCards"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="vertical"
+                                android:layout_marginTop="8dp"/>
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- Bonus Income Card -->
+                <com.google.android.material.card.MaterialCardView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        app:cardElevation="4dp"
+                        app:cardCornerRadius="16dp"
+                        app:cardBackgroundColor="#B3FFFFFF">
 
                     <LinearLayout
                             android:layout_width="match_parent"
@@ -88,144 +179,118 @@
                         <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Additional Income"
+                                android:text="Log a Bonus or One-Time Income"
                                 android:textAppearance="?attr/textAppearanceHeadline6" />
 
-                        <!-- Bonus -->
                         <com.google.android.material.textfield.TextInputLayout
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="8dp"
-                                android:hint="Bonus Amount (Optional)">
+                                android:hint="Bonus Amount"
+                                android:layout_marginTop="16dp">
                             <com.google.android.material.textfield.TextInputEditText
                                     android:id="@+id/etBonusAmount"
                                     android:layout_width="match_parent"
                                     android:layout_height="wrap_content"
                                     android:inputType="numberDecimal" />
                         </com.google.android.material.textfield.TextInputLayout>
+
                         <TextView
                                 android:id="@+id/tvBonusDate"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="8dp"
-                                android:text="Select Bonus Date (Month/Day)"
-                                android:padding="12dp"
-                                android:background="@drawable/edit_text_background"
-                                android:clickable="true"
-                                android:focusable="true" />
-                        <com.google.android.material.switchmaterial.SwitchMaterial
-                                android:id="@+id/switchBonusRecurring"
+                                android:layout_marginTop="16dp"
+                                android:text="Select Date"
+                                android:padding="16dp"
+                                android:background="?attr/editTextBackground"
+                                android:drawableEnd="@android:drawable/ic_menu_my_calendar"
+                                android:gravity="center_vertical"/>
+
+                        <RadioGroup
+                                android:id="@+id/rgBonusType"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal"
+                                android:layout_marginTop="16dp">
+                            <RadioButton
+                                    android:id="@+id/rbBonusRecurring"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:text="Recurring" />
+                            <RadioButton
+                                    android:id="@+id/rbBonusOneTime"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:checked="true"
+                                    android:text="One-Time" />
+                        </RadioGroup>
+
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- Other Income Card -->
+                <com.google.android.material.card.MaterialCardView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:layout_marginBottom="16dp"
+                        app:cardElevation="4dp"
+                        app:cardCornerRadius="16dp"
+                        app:cardBackgroundColor="#B3FFFFFF">
+
+                    <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:padding="16dp">
+
+                        <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Recurring Bonus" />
+                                android:text="Add Other Income Source"
+                                android:textAppearance="?attr/textAppearanceHeadline6" />
 
-                        <!-- Other Income -->
                         <com.google.android.material.textfield.TextInputLayout
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="16dp"
-                                android:hint="Other Income Source (e.g., Freelance)">
+                                android:hint="Income Source Name"
+                                android:layout_marginTop="16dp">
                             <com.google.android.material.textfield.TextInputEditText
                                     android:id="@+id/etOtherIncomeName"
                                     android:layout_width="match_parent"
-                                    android:layout_height="wrap_content" />
+                                    android:layout_height="wrap_content"
+                                    android:inputType="text" />
                         </com.google.android.material.textfield.TextInputLayout>
+
                         <com.google.android.material.textfield.TextInputLayout
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="8dp"
-                                android:hint="Amount">
+                                android:hint="Amount"
+                                android:layout_marginTop="8dp">
                             <com.google.android.material.textfield.TextInputEditText
                                     android:id="@+id/etOtherIncomeAmount"
                                     android:layout_width="match_parent"
                                     android:layout_height="wrap_content"
                                     android:inputType="numberDecimal" />
                         </com.google.android.material.textfield.TextInputLayout>
-                        <com.google.android.material.switchmaterial.SwitchMaterial
-                                android:id="@+id/switchOtherIncomeRecurring"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="Recurring Income" />
 
-                    </LinearLayout>
-                </com.google.android.material.card.MaterialCardView>
-
-
-                <!-- Recurring Expenses -->
-                <com.google.android.material.card.MaterialCardView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="16dp"
-                        app:cardElevation="2dp"
-                        app:cardCornerRadius="12dp">
-                    <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:orientation="vertical"
-                            android:padding="16dp">
-                        <LinearLayout
+                        <RadioGroup
+                                android:id="@+id/rgOtherIncomeType"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:gravity="center_vertical"
-                                android:orientation="horizontal">
-                            <TextView
-                                    android:layout_width="0dp"
-                                    android:layout_height="wrap_content"
-                                    android:layout_weight="1"
-                                    android:text="Recurring Expenses"
-                                    android:textAppearance="?attr/textAppearanceHeadline6" />
-                            <com.google.android.material.button.MaterialButton
-                                    android:id="@+id/buttonAddExpense"
-                                    style="@style/Widget.MaterialComponents.Button.TextButton.Icon"
+                                android:orientation="horizontal"
+                                android:layout_marginTop="16dp">
+                            <RadioButton
+                                    android:id="@+id/rbRecurring"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="Add"
-                                    app:icon="@drawable/ic_add" />
-                        </LinearLayout>
-                        <LinearLayout
-                                android:id="@+id/containerFixedExpenses"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:orientation="vertical" />
-                    </LinearLayout>
-                </com.google.android.material.card.MaterialCardView>
-
-                <!-- Credit Cards -->
-                <com.google.android.material.card.MaterialCardView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="16dp"
-                        app:cardElevation="2dp"
-                        app:cardCornerRadius="12dp">
-                    <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:orientation="vertical"
-                            android:padding="16dp">
-                        <LinearLayout
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:gravity="center_vertical"
-                                android:orientation="horizontal">
-                            <TextView
-                                    android:layout_width="0dp"
-                                    android:layout_height="wrap_content"
-                                    android:layout_weight="1"
-                                    android:text="Credit Card Payments"
-                                    android:textAppearance="?attr/textAppearanceHeadline6" />
-                            <com.google.android.material.button.MaterialButton
-                                    android:id="@+id/buttonAddCard"
-                                    style="@style/Widget.MaterialComponents.Button.TextButton.Icon"
+                                    android:text="Recurring" />
+                            <RadioButton
+                                    android:id="@+id/rbOneTime"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:text="Add"
-                                    app:icon="@drawable/ic_add" />
-                        </LinearLayout>
-                        <LinearLayout
-                                android:id="@+id/containerCreditCards"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:orientation="vertical" />
+                                    android:text="One-Time" />
+                        </RadioGroup>
+
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
@@ -234,12 +299,12 @@
 
     </androidx.coordinatorlayout.widget.CoordinatorLayout>
 
+    <!-- Bottom Navigation -->
     <com.google.android.material.bottomnavigation.BottomNavigationView
             android:id="@+id/bottom_navigation"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_alignParentBottom="true"
-            android:background="?android:attr/windowBackground"
             app:menu="@menu/bottom_nav" />
 
 </RelativeLayout>

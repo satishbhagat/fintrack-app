@@ -29,7 +29,19 @@ public class DashboardResponse {
     @SerializedName("totalIncome")
     private BigDecimal totalIncome;
 
+    @SerializedName("isEditable")
+    private boolean isEditable; // New field to control UI state
+
+
     // Getters and setters
+    public boolean isEditable() {
+        return isEditable;
+    }
+
+    public void setEditable(boolean editable) {
+        isEditable = editable;
+    }
+
     public List<MonthlyExpenseItem> getExpenses() { return expenses; }
     public void setExpenses(List<MonthlyExpenseItem> expenses) { this.expenses = expenses; }
 

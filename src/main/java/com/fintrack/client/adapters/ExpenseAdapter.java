@@ -10,6 +10,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.fintrack.client.R;
 import com.fintrack.client.dto.DashboardResponse;
 import com.fintrack.client.models.AbstractExpenseItem;
+import com.fintrack.client.models.MonthlyExpense;
 import com.fintrack.client.models.UpdateExpenseRequest;
 import com.fintrack.client.network.ApiService;
 import com.fintrack.client.network.RetrofitClient;
@@ -24,19 +25,24 @@ import java.util.Locale;
 
 public class ExpenseAdapter extends RecyclerView.Adapter<ExpenseAdapter.ExpenseViewHolder> {
 
-    // Listener interface to communicate with the Activity
+    private List<AbstractExpenseItem> expenses = new ArrayList<>();
+    private ApiService apiService;
+    private OnExpenseStatusChangedListener statusChangedListener;
+    private boolean isReadOnly = false;
+
     public interface OnExpenseStatusChangedListener {
         void onStatusChanged();
     }
 
-    private List<AbstractExpenseItem> expenses = new ArrayList<>();
-    private ApiService apiService;
-    private OnExpenseStatusChangedListener statusChangedListener;
-
     public ExpenseAdapter(ArrayList<AbstractExpenseItem> expenses, OnExpenseStatusChangedListener listener) {
         this.expenses = expenses;
         this.statusChangedListener = listener;
-        apiService = RetrofitClient.getInstance().create(ApiService.class);
+        this.apiService = RetrofitClient.getInstance().create(ApiService.class);
+    }
+
+    public void setReadOnly(boolean readOnly) {
+        isReadOnly = readOnly;
+        notifyDataSetChanged();
     }
 
     @NonNull
@@ -68,7 +74,7 @@ public class ExpenseAdapter extends RecyclerView.Adapter<ExpenseAdapter.ExpenseV
         notifyDataSetChanged();
     }
 
-    public void addExpense(AbstractExpenseItem expense) {
+    public void addExpense(MonthlyExpense expense) {
         this.expenses.add(0, expense);
         notifyItemInserted(0);
     }
@@ -98,17 +104,14 @@ public class ExpenseAdapter extends RecyclerView.Adapter<ExpenseAdapter.ExpenseV
             switchStatus.setChecked(isPaid);
             switchStatus.setText(isPaid ? "Paid" : "Pending");
 
-            // Set listener to null before changing checked state to prevent infinite loops
-            switchStatus.setOnCheckedChangeListener(null);
-            switchStatus.setChecked(isPaid);
+            // Disable the switch if in read-only mode
+            switchStatus.setEnabled(!isReadOnly);
 
             switchStatus.setOnCheckedChangeListener((buttonView, isChecked) -> {
                 String newStatus = isChecked ? "PAID" : "PENDING";
-                expense.setStatus(newStatus);
+                expense.setStatus(newStatus); // Optimistically update the local data
                 switchStatus.setText(newStatus);
                 updateExpenseStatus(String.valueOf(expense.getId()), newStatus);
-
-                // Notify the activity that a status has changed
                 if (statusChangedListener != null) {
                     statusChangedListener.onStatusChanged();
                 }
@@ -131,7 +134,7 @@ public class ExpenseAdapter extends RecyclerView.Adapter<ExpenseAdapter.ExpenseV
 
                 @Override
                 public void onFailure(Call<Void> call, Throwable t) {
-                    Toast.makeText(itemView.getContext(), "Network error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+                    Toast.makeText(itemView.getContext(), "Network error", Toast.LENGTH_SHORT).show();
                 }
             });
         }
