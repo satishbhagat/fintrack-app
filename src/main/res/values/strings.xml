@@ -13,13 +13,15 @@
         <item>Utilities</item>
         <item>Petrol</item>
         <item>Commute</item>
+        <item>mobile</item>
+        <item>family</item>
         <item>Other</item>
     </string-array>
 
     <string-array name="credit_card_issuers">
         <item>HDFC Bank</item>
         <item>ICICI Bank</item>
-        <item>State Bank of India (SBI)</item>
+        <item>State Bank of India</item>
         <item>Axis Bank</item>
         <item>Kotak Mahindra Bank</item>
         <item>American Express</item>

@@ -1,0 +1,23 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+        android:width="108dp"
+        android:height="108dp"
+        android:viewportWidth="108"
+        android:viewportHeight="108">
+
+    <!-- The 'F' character -->
+    <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M 32,25 L 32,83 L 44,83 L 44,58 L 62,58 L 62,46 L 44,46 L 44,37 L 68,37 L 68,25 Z" />
+
+    <!-- The three bars with slight transparency -->
+    <path
+            android:fillColor="#CCFFFFFF"
+            android:pathData="M 72,58 L 76,58 L 76,83 L 72,83 Z" />
+    <path
+            android:fillColor="#CCFFFFFF"
+            android:pathData="M 79,52 L 83,52 L 83,83 L 79,83 Z" />
+    <path
+            android:fillColor="#CCFFFFFF"
+            android:pathData="M 86,46 L 90,46 L 90,83 L 86,83 Z" />
+
+</vector>
