@@ -1,38 +1,26 @@
 package com.fintrack.client.activities;
 
 import android.app.DatePickerDialog;
-import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.AdapterView;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.LinearLayout;
-import android.widget.RadioButton;
-import android.widget.RadioGroup;
-import android.widget.Spinner;
-import android.widget.TextView;
-import android.widget.Toast;
+import android.widget.*;
 import androidx.appcompat.widget.Toolbar;
 import com.fintrack.client.R;
 import com.fintrack.client.dto.GenericResponse;
-import com.fintrack.client.dto.ProfileSetupRequest;
 import com.fintrack.client.models.ExtraIncome;
 import com.fintrack.client.network.ApiService;
 import com.fintrack.client.network.RetrofitClient;
 import com.fintrack.client.utils.UserSession;
-import java.math.BigDecimal;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.List;
-import java.util.Locale;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
+
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Locale;
 
 public class SpendActivity extends BaseActivity {
 
@@ -172,7 +160,7 @@ public class SpendActivity extends BaseActivity {
             int selectedId = rgBonusType.getCheckedRadioButtonId();
             RadioButton radioButton = findViewById(selectedId);
             bonus.setRecurring("Recurring".equals(radioButton.getText().toString()));
-
+            bonus.setUserId(UserSession.getInstance().getUserId());
             // Call API to save bonus
             saveExtraIncome(bonus);
         }

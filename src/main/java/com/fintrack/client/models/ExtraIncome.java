@@ -14,6 +14,14 @@ public class ExtraIncome {
     public boolean isRecurring;
     public Instant createdAt;
 
+    public UUID getUserId() {
+        return userId;
+    }
+
+    public void setUserId(UUID userId) {
+        this.userId = userId;
+    }
+
     public Instant getCreatedAt() {
         return createdAt;
     }
