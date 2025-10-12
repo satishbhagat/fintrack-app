@@ -1,15 +1,23 @@
 package com.fintrack.client.activities;
 
-import android.app.DatePickerDialog;
 import android.os.Bundle;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
-import android.widget.*;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ImageButton;
+import android.widget.LinearLayout;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
+import android.widget.TextView;
+import android.widget.Toast;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.Toolbar;
 import com.fintrack.client.R;
 import com.fintrack.client.dto.GenericResponse;
+import com.fintrack.client.dto.SpendDataResponse;
+import com.fintrack.client.models.AddCreditCardRequest;
+import com.fintrack.client.models.AddFixedExpenditureRequest;
 import com.fintrack.client.models.ExtraIncome;
 import com.fintrack.client.network.ApiService;
 import com.fintrack.client.network.RetrofitClient;
@@ -20,21 +28,16 @@ import retrofit2.Response;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.List;
 import java.util.Locale;
+import java.util.UUID;
 
 public class SpendActivity extends BaseActivity {
 
-    private EditText editTextSalary;
     private LinearLayout containerFixedExpenses, containerCreditCards;
     private Button buttonAddExpense, buttonAddCard;
+    private ImageButton buttonAddOtherIncome;
     private ApiService apiService;
-    private String emailId;
-
-    // Bonus and Other Income fields
-    private EditText etBonusAmount, etOtherIncomeName, etOtherIncomeAmount;
-    private TextView tvBonusDate;
-    private RadioGroup rgBonusType, rgOtherIncomeType;
-    private Calendar bonusCalendar = Calendar.getInstance();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,169 +46,24 @@ public class SpendActivity extends BaseActivity {
 
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+        setToolbarTitle("Manage Spending"); // Set the title for the toolbar
+
         bottomNavigationView = findViewById(R.id.bottom_navigation);
         bottomNavigationView.setOnItemSelectedListener(this);
 
-        setToolbarTitle("Manage Spending");
-        emailId = UserSession.getInstance().getEmailId();
         apiService = RetrofitClient.getInstance().create(ApiService.class);
 
-        // Initialize views
-        editTextSalary = findViewById(R.id.editTextSalary);
         containerFixedExpenses = findViewById(R.id.containerFixedExpenses);
         containerCreditCards = findViewById(R.id.containerCreditCards);
         buttonAddExpense = findViewById(R.id.buttonAddExpense);
         buttonAddCard = findViewById(R.id.buttonAddCard);
+        buttonAddOtherIncome = findViewById(R.id.buttonAddOtherIncome);
 
-        // Bonus and Other Income
-        etBonusAmount = findViewById(R.id.etBonusAmount);
-        tvBonusDate = findViewById(R.id.tvBonusDate);
-        rgBonusType = findViewById(R.id.rgBonusType); // Corrected ID
-        etOtherIncomeName = findViewById(R.id.etOtherIncomeName);
-        etOtherIncomeAmount = findViewById(R.id.etOtherIncomeAmount);
-        rgOtherIncomeType = findViewById(R.id.rgOtherIncomeType);
+        buttonAddExpense.setOnClickListener(v -> showAddFixedExpenseDialog());
+        buttonAddCard.setOnClickListener(v -> showAddCreditCardDialog());
+        buttonAddOtherIncome.setOnClickListener(v -> showAddOtherIncomeDialog());
 
-        if (UserSession.getInstance().getSalary() != null) {
-            editTextSalary.setText(UserSession.getInstance().getSalary().toString());
-        }
-
-        buttonAddExpense.setOnClickListener(v -> addFixedExpenseView());
-        buttonAddCard.setOnClickListener(v -> addCreditCardView());
-        tvBonusDate.setOnClickListener(v -> showDatePicker());
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.spend_menu, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        if (item.getItemId() == R.id.action_save) {
-            saveProfile();
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
-    }
-
-    private void addFixedExpenseView() {
-        LayoutInflater inflater = LayoutInflater.from(this);
-        View expenseView = inflater.inflate(R.layout.item_fixed_expense, containerFixedExpenses, false);
-        setupSpinnerListener(expenseView, R.id.spinnerExpenseName, R.id.etOtherExpense);
-        containerFixedExpenses.addView(expenseView);
-    }
-
-    private void addCreditCardView() {
-        LayoutInflater inflater = LayoutInflater.from(this);
-        View cardView = inflater.inflate(R.layout.item_credit_card, containerCreditCards, false);
-        setupSpinnerListener(cardView, R.id.spinnerCardName, R.id.etOtherCreditCard);
-        containerCreditCards.addView(cardView);
-    }
-
-    private void setupSpinnerListener(View parentView, int spinnerId, int otherEditTextId) {
-        Spinner spinner = parentView.findViewById(spinnerId);
-        EditText otherEditText = parentView.findViewById(otherEditTextId);
-
-        spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                String selectedItem = parent.getItemAtPosition(position).toString();
-                if ("Other".equalsIgnoreCase(selectedItem)) {
-                    otherEditText.setVisibility(View.VISIBLE);
-                } else {
-                    otherEditText.setVisibility(View.GONE);
-                }
-            }
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
-                otherEditText.setVisibility(View.GONE);
-            }
-        });
-    }
-
-    private void showDatePicker() {
-        DatePickerDialog datePickerDialog = new DatePickerDialog(this, (view, year, month, dayOfMonth) -> {
-            bonusCalendar.set(Calendar.YEAR, year);
-            bonusCalendar.set(Calendar.MONTH, month);
-            bonusCalendar.set(Calendar.DAY_OF_MONTH, dayOfMonth);
-            SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", Locale.US);
-            tvBonusDate.setText(sdf.format(bonusCalendar.getTime()));
-        }, bonusCalendar.get(Calendar.YEAR), bonusCalendar.get(Calendar.MONTH), bonusCalendar.get(Calendar.DAY_OF_MONTH));
-        datePickerDialog.show();
-    }
-
-    private void saveProfile() {
-        saveBonusIncome();
-        saveOtherIncome();
-        // The rest of the profile saving logic
-        String salaryStr = editTextSalary.getText().toString();
-        if (salaryStr.isEmpty()) {
-            Toast.makeText(this, "Please enter your monthly salary.", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        // ... (rest of the saveProfile logic for salary, fixed expenses, etc.)
-        Toast.makeText(this, "Data saved successfully!", Toast.LENGTH_SHORT).show();
-    }
-
-    private void saveBonusIncome() {
-        String amountStr = etBonusAmount.getText().toString();
-        if (!amountStr.isEmpty()) {
-            ExtraIncome bonus = new ExtraIncome();
-            bonus.setAmount(Double.parseDouble(amountStr));
-            bonus.setDescription("Bonus");
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
-            bonus.setIncomeMonth(sdf.format(bonusCalendar.getTime()));
-
-            int selectedId = rgBonusType.getCheckedRadioButtonId();
-            RadioButton radioButton = findViewById(selectedId);
-            bonus.setRecurring("Recurring".equals(radioButton.getText().toString()));
-            bonus.setUserId(UserSession.getInstance().getUserId());
-            // Call API to save bonus
-            saveExtraIncome(bonus);
-        }
-    }
-
-    private void saveOtherIncome() {
-        String name = etOtherIncomeName.getText().toString();
-        String amountStr = etOtherIncomeAmount.getText().toString();
-        if (!name.isEmpty() && !amountStr.isEmpty()) {
-            ExtraIncome otherIncome = new ExtraIncome();
-            otherIncome.setDescription(name);
-            otherIncome.setAmount(Double.parseDouble(amountStr));
-
-            int selectedId = rgOtherIncomeType.getCheckedRadioButtonId();
-            RadioButton radioButton = findViewById(selectedId);
-            otherIncome.setRecurring("Recurring".equals(radioButton.getText().toString()));
-
-            // For recurring, you might want a start date, for one-time, today's date
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
-            otherIncome.setIncomeMonth(sdf.format(Calendar.getInstance().getTime()));
-
-            saveExtraIncome(otherIncome);
-        }
-    }
-
-    private void saveExtraIncome(ExtraIncome income) {
-        apiService.addExtraIncome(income).enqueue(new Callback<GenericResponse>() {
-            @Override
-            public void onResponse(Call<GenericResponse> call, Response<GenericResponse> response) {
-                if (!response.isSuccessful()) {
-                    Toast.makeText(SpendActivity.this, "Failed to save income: " + income.getDescription(), Toast.LENGTH_SHORT).show();
-                }
-            }
-            @Override
-            public void onFailure(Call<GenericResponse> call, Throwable t) {
-                Toast.makeText(SpendActivity.this, "Network error while saving income.", Toast.LENGTH_SHORT).show();
-            }
-        });
-    }
-
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        bottomNavigationView.getMenu().findItem(R.id.nav_spend).setChecked(true);
+        fetchSpendData();
     }
 
     @Override
@@ -213,6 +71,198 @@ public class SpendActivity extends BaseActivity {
         if (getSupportActionBar() != null) {
             getSupportActionBar().setTitle(title);
         }
+    }
+
+    private void fetchSpendData() {
+        UUID userId = UserSession.getInstance().getUserId();
+        if (userId == null) {
+            Toast.makeText(this, "Session expired. Please log in again.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        apiService.getSpendData(String.valueOf(userId)).enqueue(new Callback<SpendDataResponse>() {
+            @Override
+            public void onResponse(Call<SpendDataResponse> call, Response<SpendDataResponse> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    populateSpendData(response.body());
+                } else {
+                    Toast.makeText(SpendActivity.this, "Failed to load data.", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<SpendDataResponse> call, Throwable t) {
+                Toast.makeText(SpendActivity.this, "Network Error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void populateSpendData(SpendDataResponse data) {
+        // Populate Fixed Expenses
+        containerFixedExpenses.removeAllViews();
+        List<SpendDataResponse.FixedExpenditureItem> fixedExpenses = data.getFixedExpenditures();
+        if (fixedExpenses != null) {
+            for (SpendDataResponse.FixedExpenditureItem item : fixedExpenses) {
+                addTextViewToShow(containerFixedExpenses, item.getName() + " - ₹" + item.getAmount());
+            }
+        }
+
+        // Populate Credit Cards
+        containerCreditCards.removeAllViews();
+        List<SpendDataResponse.CreditCardItem> creditCards = data.getCreditCards();
+        if (creditCards != null) {
+            for (SpendDataResponse.CreditCardItem item : creditCards) {
+                addTextViewToShow(containerCreditCards, item.getCardName() + " (Due: " + item.getDueDate() + ")");
+            }
+        }
+    }
+
+    private void addTextViewToShow(LinearLayout container, String text) {
+        TextView textView = new TextView(this);
+        textView.setText(text);
+        textView.setTextColor(getResources().getColor(R.color.on_secondary)); // Changed to a slick, theme-aware color
+        textView.setTextSize(16);
+        textView.setPadding(0, 8, 0, 8);
+        container.addView(textView);
+    }
+
+    private void showAddFixedExpenseDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        LayoutInflater inflater = getLayoutInflater();
+        View dialogView = inflater.inflate(R.layout.dialog_add_fixed_expense, null);
+        builder.setView(dialogView);
+
+        final EditText etExpenseName = dialogView.findViewById(R.id.etExpenseName);
+        final EditText etExpenseAmount = dialogView.findViewById(R.id.etExpenseAmount);
+
+        builder.setPositiveButton("Save", (dialog, which) -> {
+            String name = etExpenseName.getText().toString();
+            String amount = etExpenseAmount.getText().toString();
+            if (!name.isEmpty() && !amount.isEmpty()) {
+                AddFixedExpenditureRequest request = new AddFixedExpenditureRequest();
+                request.name = name;
+                request.amount = Double.parseDouble(amount);
+                // You might need to add due_date to your dialog if required by backend
+                // request.due_date = ...;
+                saveNewFixedExpense(request);
+            }
+        });
+        builder.setNegativeButton("Cancel", (dialog, which) -> dialog.cancel());
+        builder.show();
+    }
+
+    private void showAddCreditCardDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        LayoutInflater inflater = getLayoutInflater();
+        View dialogView = inflater.inflate(R.layout.dialog_add_credit_card, null);
+        builder.setView(dialogView);
+
+        final EditText etCardName = dialogView.findViewById(R.id.etCardName);
+        final EditText etDueDate = dialogView.findViewById(R.id.etDueDate);
+
+        builder.setPositiveButton("Save", (dialog, which) -> {
+            String name = etCardName.getText().toString();
+            // Assuming due date is also captured in your AddCreditCardRequest
+            if (!name.isEmpty()) {
+                AddCreditCardRequest request = new AddCreditCardRequest();
+                request.card_name = name;
+                saveNewCreditCard(request);
+            }
+        });
+        builder.setNegativeButton("Cancel", (dialog, which) -> dialog.cancel());
+        builder.show();
+    }
+
+    private void showAddOtherIncomeDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        LayoutInflater inflater = getLayoutInflater();
+        View dialogView = inflater.inflate(R.layout.dialog_add_other_income, null);
+        builder.setView(dialogView);
+
+        final EditText etDesc = dialogView.findViewById(R.id.etIncomeDescription);
+        final EditText etAmount = dialogView.findViewById(R.id.etIncomeAmount);
+        final RadioGroup rgType = dialogView.findViewById(R.id.rgIncomeType);
+
+        builder.setPositiveButton("Save", (dialog, which) -> {
+            String desc = etDesc.getText().toString();
+            String amount = etAmount.getText().toString();
+            if (!desc.isEmpty() && !amount.isEmpty()) {
+                ExtraIncome income = new ExtraIncome();
+                income.setDescription(desc);
+                income.setAmount(Double.parseDouble(amount));
+
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
+                income.setIncomeMonth(sdf.format(Calendar.getInstance().getTime()));
+
+                int selectedId = rgType.getCheckedRadioButtonId();
+                RadioButton radioButton = dialogView.findViewById(selectedId);
+                income.setRecurring("Recurring".equals(radioButton.getText().toString()));
+
+                saveOtherIncome(income);
+            }
+        });
+        builder.setNegativeButton("Cancel", (dialog, which) -> dialog.cancel());
+        builder.show();
+    }
+
+    // API Saving methods
+    private void saveNewFixedExpense(AddFixedExpenditureRequest request) {
+        apiService.addFixedExpense(request).enqueue(new Callback<GenericResponse>() {
+            @Override
+            public void onResponse(Call<GenericResponse> call, Response<GenericResponse> response) {
+                if (response.isSuccessful()) {
+                    Toast.makeText(SpendActivity.this, "Bill Saved!", Toast.LENGTH_SHORT).show();
+                    fetchSpendData(); // Refresh list
+                } else {
+                    Toast.makeText(SpendActivity.this, "Failed to save.", Toast.LENGTH_SHORT).show();
+                }
+            }
+            @Override
+            public void onFailure(Call<GenericResponse> call, Throwable t) {
+                Toast.makeText(SpendActivity.this, "Network Error.", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void saveNewCreditCard(AddCreditCardRequest request) {
+        apiService.addCreditCard(request).enqueue(new Callback<GenericResponse>() {
+            @Override
+            public void onResponse(Call<GenericResponse> call, Response<GenericResponse> response) {
+                if (response.isSuccessful()) {
+                    Toast.makeText(SpendActivity.this, "Card Saved!", Toast.LENGTH_SHORT).show();
+                    fetchSpendData(); // Refresh list
+                } else {
+                    Toast.makeText(SpendActivity.this, "Failed to save.", Toast.LENGTH_SHORT).show();
+                }
+            }
+            @Override
+            public void onFailure(Call<GenericResponse> call, Throwable t) {
+                Toast.makeText(SpendActivity.this, "Network Error.", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void saveOtherIncome(ExtraIncome income) {
+        apiService.addExtraIncome(income).enqueue(new Callback<GenericResponse>() {
+            @Override
+            public void onResponse(Call<GenericResponse> call, Response<GenericResponse> response) {
+                if (response.isSuccessful()) {
+                    Toast.makeText(SpendActivity.this, "Income Logged!", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(SpendActivity.this, "Failed to log income.", Toast.LENGTH_SHORT).show();
+                }
+            }
+            @Override
+            public void onFailure(Call<GenericResponse> call, Throwable t) {
+                Toast.makeText(SpendActivity.this, "Network Error.", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        bottomNavigationView.getMenu().findItem(R.id.nav_spend).setChecked(true);
     }
 }
 
