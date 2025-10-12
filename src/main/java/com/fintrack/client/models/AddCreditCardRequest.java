@@ -1,5 +1,8 @@
 package com.fintrack.client.models;
 
 public class AddCreditCardRequest {
-    public String card_name;
+    public String cardName;
+    public int dueDate;
+
+    public String userId;
 }

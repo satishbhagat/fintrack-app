@@ -4,4 +4,5 @@ public class AddFixedExpenditureRequest {
     public String name;
     public double amount;
     public int due_date;
+    public String userId;
 }

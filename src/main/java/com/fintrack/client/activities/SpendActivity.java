@@ -142,6 +142,7 @@ public class SpendActivity extends BaseActivity {
                 AddFixedExpenditureRequest request = new AddFixedExpenditureRequest();
                 request.name = name;
                 request.amount = Double.parseDouble(amount);
+                request.userId = UserSession.getInstance().getUserId().toString();
                 // You might need to add due_date to your dialog if required by backend
                 // request.due_date = ...;
                 saveNewFixedExpense(request);
@@ -165,7 +166,9 @@ public class SpendActivity extends BaseActivity {
             // Assuming due date is also captured in your AddCreditCardRequest
             if (!name.isEmpty()) {
                 AddCreditCardRequest request = new AddCreditCardRequest();
-                request.card_name = name;
+                request.cardName = name;
+                request.userId = UserSession.getInstance().getUserId().toString();
+                request.dueDate = Integer.parseInt(etDueDate.getText().toString()); // Add due date if applicable
                 saveNewCreditCard(request);
             }
         });
