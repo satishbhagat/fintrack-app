@@ -1,0 +1,15 @@
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Teal Background Circle -->
+    <item>
+        <shape android:shape="oval">
+            <solid android:color="#4A8C81"/>
+        </shape>
+    </item>
+    <!-- Foreground Logo (inset to give some padding) -->
+    <item
+            android:drawable="@drawable/ic_launcher_foreground"
+            android:top="18dp"
+            android:bottom="18dp"
+            android:left="18dp"
+            android:right="18dp"/>
+</layer-list>
