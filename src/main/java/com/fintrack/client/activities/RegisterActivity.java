@@ -6,6 +6,7 @@ import android.util.Log;
 import android.util.Patterns;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -27,6 +28,7 @@ public class RegisterActivity extends AppCompatActivity {
 
     private EditText etName,etEmail, etPassword, etSalary;
     private Button btnRegister;
+    private TextView tvLoginLink;
 
     private ApiService apiService;
 
@@ -40,12 +42,19 @@ public class RegisterActivity extends AppCompatActivity {
         etPassword = findViewById(R.id.etPassword);
         etSalary = findViewById(R.id.etSalary);
         btnRegister = findViewById(R.id.btnRegister);
+        tvLoginLink = findViewById(R.id.tvLoginLink);
 
         apiService = RetrofitClient.getInstance().create(ApiService.class);
 
         btnRegister.setOnClickListener(v -> {
             Log.d(TAG, "Register button clicked");
             registerUser();
+        });
+
+        tvLoginLink.setOnClickListener(v -> {
+            Log.d(TAG, "Login link clicked");
+            startActivity(new Intent(RegisterActivity.this, LoginActivity.class));
+            finish();
         });
     }
 
