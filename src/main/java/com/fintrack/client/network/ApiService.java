@@ -27,7 +27,7 @@ public interface ApiService {
     @POST("api/v1/profile/setup")
     Call<GenericResponse> setupProfile( @Body ProfileSetupRequest request);
 
-    @POST("api/v1/incomes/extra")
+    @POST("api/v1/incomes/add")
     Call<GenericResponse> addExtraIncome(@Body ExtraIncome request);
 
     @POST("api/v1/expenses/monthly")

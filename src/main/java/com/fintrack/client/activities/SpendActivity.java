@@ -3,14 +3,7 @@ package com.fintrack.client.activities;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.ImageButton;
-import android.widget.LinearLayout;
-import android.widget.RadioButton;
-import android.widget.RadioGroup;
-import android.widget.TextView;
-import android.widget.Toast;
+import android.widget.*;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.Toolbar;
 import com.fintrack.client.R;
@@ -34,9 +27,9 @@ import java.util.UUID;
 
 public class SpendActivity extends BaseActivity {
 
-    private LinearLayout containerFixedExpenses, containerCreditCards;
-    private Button buttonAddExpense, buttonAddCard;
-    private ImageButton buttonAddOtherIncome;
+    private LinearLayout containerFixedExpenses, containerCreditCards ,containerOtherIncome;
+    private Button buttonAddExpense, buttonAddCard,buttonAddOtherIncome;
+    //private ImageButton buttonAddOtherIncome;
     private ApiService apiService;
 
     @Override
@@ -55,6 +48,7 @@ public class SpendActivity extends BaseActivity {
 
         containerFixedExpenses = findViewById(R.id.containerFixedExpenses);
         containerCreditCards = findViewById(R.id.containerCreditCards);
+        containerOtherIncome = findViewById(R.id.containerOtherIncome);
         buttonAddExpense = findViewById(R.id.buttonAddExpense);
         buttonAddCard = findViewById(R.id.buttonAddCard);
         buttonAddOtherIncome = findViewById(R.id.buttonAddOtherIncome);
@@ -115,12 +109,20 @@ public class SpendActivity extends BaseActivity {
                 addTextViewToShow(containerCreditCards, item.getCardName() + " (Due: " + item.getDueDate() + ")");
             }
         }
+
+        containerOtherIncome.removeAllViews();
+        List<SpendDataResponse.ExtraIncomeItem> otherIncomes = data.getExtraIncome();
+        if (otherIncomes != null) {
+            for (SpendDataResponse.ExtraIncomeItem item : otherIncomes) {
+                addTextViewToShow(containerOtherIncome, item.getDescription() + " - ₹" + item.getAmount());
+            }
+        }
     }
 
     private void addTextViewToShow(LinearLayout container, String text) {
         TextView textView = new TextView(this);
         textView.setText(text);
-        textView.setTextColor(getResources().getColor(R.color.on_secondary)); // Changed to a slick, theme-aware color
+        textView.setTextColor(getResources().getColor(R.color.on_secondary));
         textView.setTextSize(16);
         textView.setPadding(0, 8, 0, 8);
         container.addView(textView);
@@ -200,6 +202,8 @@ public class SpendActivity extends BaseActivity {
                 int selectedId = rgType.getCheckedRadioButtonId();
                 RadioButton radioButton = dialogView.findViewById(selectedId);
                 income.setRecurring("Recurring".equals(radioButton.getText().toString()));
+
+                income.setUserId(UserSession.getInstance().getUserId());
 
                 saveOtherIncome(income);
             }

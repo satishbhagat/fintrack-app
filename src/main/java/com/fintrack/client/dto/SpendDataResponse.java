@@ -13,12 +13,32 @@ public class SpendDataResponse {
     @SerializedName("creditCards")
     private List<CreditCardItem> creditCards;
 
+    @SerializedName("extraIncome")
+    private List<ExtraIncomeItem> extraIncome;
+
     public List<FixedExpenditureItem> getFixedExpenditures() {
         return fixedExpenditures;
     }
 
     public List<CreditCardItem> getCreditCards() {
         return creditCards;
+    }
+
+
+    public void setFixedExpenditures(List<FixedExpenditureItem> fixedExpenditures) {
+        this.fixedExpenditures = fixedExpenditures;
+    }
+
+    public void setCreditCards(List<CreditCardItem> creditCards) {
+        this.creditCards = creditCards;
+    }
+
+    public List<ExtraIncomeItem> getExtraIncome() {
+        return extraIncome;
+    }
+
+    public void setExtraIncome(List<ExtraIncomeItem> extraIncome) {
+        this.extraIncome = extraIncome;
     }
 
     // Inner class for Fixed Expenditure items
@@ -52,6 +72,23 @@ public class SpendDataResponse {
 
         public String getDueDate() {
             return dueDate;
+        }
+    }
+
+    // Inner class for Extra Income items
+    public static class ExtraIncomeItem {
+        @SerializedName("amount")
+        private BigDecimal amount;
+
+        @SerializedName("description")
+        private String description;
+
+        public BigDecimal getAmount() {
+            return amount;
+        }
+
+        public String getDescription() {
+            return description;
         }
     }
 }
