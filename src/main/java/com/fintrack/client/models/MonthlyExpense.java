@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 import java.util.UUID;
 
 public class MonthlyExpense extends AbstractExpenseItem{
-    public UUID id;
+    public String id;
     public UUID userId;
     public String name;
     public BigDecimal amount;
@@ -15,7 +15,7 @@ public class MonthlyExpense extends AbstractExpenseItem{
     public String createdAt;
 
     @Override
-    public UUID getId() {
+    public String getId() {
         return this.id;
     }
 
@@ -35,7 +35,7 @@ public class MonthlyExpense extends AbstractExpenseItem{
     }
 
     @Override
-    public void setId(UUID id) {
+    public void setId(String id) {
         this.id =id;
     }
 

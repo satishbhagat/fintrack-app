@@ -11,9 +11,10 @@ import java.util.UUID;
 public abstract class AbstractExpenseItem {
 
     // Abstract methods to ensure subclasses implement these getters
-    public abstract UUID getId();
+    public abstract String getId();
 
-    public abstract void setId(UUID id);
+    public abstract void setId(String id);
+
 
     public abstract String getName();
     public abstract BigDecimal getAmount();
