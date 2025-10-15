@@ -35,7 +35,16 @@
 
     </androidx.appcompat.widget.Toolbar>
 
+    <FrameLayout
+            android:id="@+id/fragment_container"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_above="@+id/bottom_navigation"
+            android:layout_below="@id/toolbar" />
+
+
     <androidx.core.widget.NestedScrollView
+            android:id="@+id/dashboard_content_container"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_above="@+id/bottom_navigation"
@@ -242,4 +251,3 @@
             app:menu="@menu/bottom_nav" />
 
 </RelativeLayout>
-

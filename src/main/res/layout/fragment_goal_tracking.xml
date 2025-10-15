@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:orientation="vertical"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              android:padding="16dp">
+
+    <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Savings Goals"
+            android:textAppearance="?attr/textAppearanceHeadline5"/>
+
+    <EditText
+            android:id="@+id/etGoalName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Goal Name (e.g., Vacation)"
+            android:layout_marginTop="16dp" />
+
+    <EditText
+            android:id="@+id/etTargetAmount"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Target Amount"
+            android:inputType="numberDecimal"
+            android:layout_marginTop="8dp" />
+
+    <EditText
+            android:id="@+id/etTargetDate"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Target Date (YYYY-MM-DD)"
+            android:inputType="date"
+            android:layout_marginTop="8dp" />
+
+    <Button
+            android:id="@+id/btnSetGoal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Set Goal"
+            android:layout_marginTop="16dp" />
+
+    <TextView
+            android:id="@+id/tvMonthlyContribution"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Monthly Contribution: "
+            android:layout_marginTop="16dp"
+            android:textAppearance="?attr/textAppearanceBody1"/>
+</LinearLayout>
