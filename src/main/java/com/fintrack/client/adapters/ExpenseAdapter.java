@@ -8,9 +8,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import com.fintrack.client.R;
-import com.fintrack.client.dto.DashboardResponse;
 import com.fintrack.client.models.AbstractExpenseItem;
-import com.fintrack.client.models.MonthlyExpense;
 import com.fintrack.client.models.UpdateExpenseRequest;
 import com.fintrack.client.network.ApiService;
 import com.fintrack.client.network.RetrofitClient;
@@ -27,21 +25,28 @@ public class ExpenseAdapter extends RecyclerView.Adapter<ExpenseAdapter.ExpenseV
 
     private List<AbstractExpenseItem> expenses = new ArrayList<>();
     private ApiService apiService;
-    private OnExpenseStatusChangedListener statusChangedListener;
+    private OnExpenseInteractionListener interactionListener;
     private boolean isReadOnly = false;
 
-    public interface OnExpenseStatusChangedListener {
+    public interface OnExpenseInteractionListener {
         void onStatusChanged();
+        void onAmountClicked(AbstractExpenseItem item);
     }
 
-    public ExpenseAdapter(ArrayList<AbstractExpenseItem> expenses, OnExpenseStatusChangedListener listener) {
+    public ExpenseAdapter(ArrayList<AbstractExpenseItem> expenses, OnExpenseInteractionListener listener) {
         this.expenses = expenses;
-        this.statusChangedListener = listener;
+        this.interactionListener = listener;
         this.apiService = RetrofitClient.getInstance().create(ApiService.class);
     }
 
     public void setReadOnly(boolean readOnly) {
         isReadOnly = readOnly;
+        notifyDataSetChanged();
+    }
+
+    public void updateExpenses(List<AbstractExpenseItem> combinedList) {
+        this.expenses.clear();
+        this.expenses.addAll(combinedList);
         notifyDataSetChanged();
     }
 
@@ -63,22 +68,6 @@ public class ExpenseAdapter extends RecyclerView.Adapter<ExpenseAdapter.ExpenseV
         return expenses.size();
     }
 
-    public void updateExpenses(List<DashboardResponse.MonthlyExpenseItem> monthlyExpenses, List<DashboardResponse.FixedExpenditureItem> fixedExpenditures) {
-        expenses.clear();
-        if (fixedExpenditures != null) {
-            expenses.addAll(fixedExpenditures);
-        }
-        if (monthlyExpenses != null) {
-            expenses.addAll(monthlyExpenses);
-        }
-        notifyDataSetChanged();
-    }
-
-    public void addExpense(MonthlyExpense expense) {
-        this.expenses.add(0, expense);
-        notifyItemInserted(0);
-    }
-
     public List<AbstractExpenseItem> getCurrentExpenses() {
         return expenses;
     }
@@ -96,30 +85,43 @@ public class ExpenseAdapter extends RecyclerView.Adapter<ExpenseAdapter.ExpenseV
             switchStatus = itemView.findViewById(R.id.switchStatus);
         }
 
-        void bind(AbstractExpenseItem expense) {
+        void bind(final AbstractExpenseItem expense) {
             tvExpenseName.setText(expense.getName());
             tvExpenseAmount.setText(String.format(Locale.getDefault(), "₹%.2f", expense.getAmount().doubleValue()));
 
             boolean isPaid = "PAID".equalsIgnoreCase(expense.getStatus());
             switchStatus.setChecked(isPaid);
             switchStatus.setText(isPaid ? "Paid" : "Pending");
-
-            // Disable the switch if in read-only mode
             switchStatus.setEnabled(!isReadOnly);
 
+            // Set OnClickListener for the amount
+            tvExpenseAmount.setOnClickListener(v -> {
+                if (!isReadOnly && interactionListener != null) {
+                    interactionListener.onAmountClicked(expense);
+                }
+            });
+
             switchStatus.setOnCheckedChangeListener((buttonView, isChecked) -> {
-                String newStatus = isChecked ? "PAID" : "PENDING";
-                expense.setStatus(newStatus); // Optimistically update the local data
-                switchStatus.setText(newStatus);
-                updateExpenseStatus(String.valueOf(expense.getId()), newStatus);
-                if (statusChangedListener != null) {
-                    statusChangedListener.onStatusChanged();
+                if (buttonView.isPressed()) { // Only trigger if user interacts
+                    String newStatus = isChecked ? "PAID" : "PENDING";
+                    expense.setStatus(newStatus);
+                    switchStatus.setText(newStatus);
+                    updateExpenseStatus(String.valueOf(expense.getId()), newStatus);
+                    if (interactionListener != null) {
+                        interactionListener.onStatusChanged();
+                    }
                 }
             });
         }
 
         private void updateExpenseStatus(String expenseId, String status) {
-            if (expenseId == null) return;
+            if (expenseId == null) {
+                // This is likely a placeholder credit card, can't update status
+                Toast.makeText(itemView.getContext(), "Set an amount first to save this expense.", Toast.LENGTH_SHORT).show();
+                // Revert the switch state visually
+                switchStatus.setChecked(!switchStatus.isChecked());
+                return;
+            }
 
             UpdateExpenseRequest request = new UpdateExpenseRequest();
             request.status = status;
@@ -128,13 +130,12 @@ public class ExpenseAdapter extends RecyclerView.Adapter<ExpenseAdapter.ExpenseV
                 @Override
                 public void onResponse(Call<Void> call, Response<Void> response) {
                     if (!response.isSuccessful()) {
-                        Toast.makeText(itemView.getContext(), "Failed to update status", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(itemView.getContext(), "Failed to update status.", Toast.LENGTH_SHORT).show();
                     }
                 }
-
                 @Override
                 public void onFailure(Call<Void> call, Throwable t) {
-                    Toast.makeText(itemView.getContext(), "Network error", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(itemView.getContext(), "Network error.", Toast.LENGTH_SHORT).show();
                 }
             });
         }

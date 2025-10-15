@@ -2,9 +2,9 @@ package com.fintrack.client.dto;
 
 import com.fintrack.client.models.AbstractExpenseItem;
 import com.google.gson.annotations.SerializedName;
+
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.UUID;
 
 public class DashboardResponse {
 
@@ -13,6 +13,9 @@ public class DashboardResponse {
 
     @SerializedName("fixedExpenditures")
     private List<FixedExpenditureItem> fixedExpenditures;
+
+    @SerializedName("creditCards")
+    private List<CreditCardItem> creditCards;
 
     @SerializedName("totalExpenses")
     private BigDecimal totalExpenses;
@@ -34,6 +37,16 @@ public class DashboardResponse {
 
 
     // Getters and setters
+
+
+    public List<CreditCardItem> getCreditCards() {
+        return creditCards;
+    }
+
+    public void setCreditCards(List<CreditCardItem> creditCards) {
+        this.creditCards = creditCards;
+    }
+
     public boolean isEditable() {
         return isEditable;
     }
@@ -69,7 +82,7 @@ public class DashboardResponse {
     public static class MonthlyExpenseItem extends AbstractExpenseItem {
 
         @SerializedName("id")
-        private UUID id;
+        private String id;
 
         @SerializedName("name")
         private String name;
@@ -92,9 +105,12 @@ public class DashboardResponse {
 
         // Implemented methods from AbstractExpenseItem
         @Override
-        public UUID getId() { return this.id; }
+        public String getId() { return this.id; }
+
+
+
         @Override
-        public void setId(UUID id) { this.id = id; }
+        public void setId(String id) { this.id = id; }
 
         @Override
         public String getName() { return name; }
@@ -128,7 +144,7 @@ public class DashboardResponse {
     public static class FixedExpenditureItem extends AbstractExpenseItem {
 
         @SerializedName("id")
-        private UUID id;
+        private String id;
 
         @SerializedName("name")
         private String name;
@@ -141,9 +157,9 @@ public class DashboardResponse {
 
         // Implemented methods from AbstractExpenseItem
         @Override
-        public UUID getId() { return id; }
+        public String getId() { return id; }
         @Override
-        public void setId(UUID id) { this.id = id; }
+        public void setId(String id) { this.id = id; }
 
         @Override
         public String getName() { return name; }
@@ -159,6 +175,20 @@ public class DashboardResponse {
         public String getStatus() { return status; }
         @Override
         public void setStatus(String status) { this.status = status; }
+    }
+
+    public static class CreditCardItem {
+        @SerializedName("id")
+        private String id;
+
+        @SerializedName("cardName")
+        private String cardName;
+
+        public String getId() { return id; }
+        public void setId(String id) { this.id = id; }
+
+        public String getCardName() { return cardName; }
+        public void setCardName(String cardName) { this.cardName = cardName; }
     }
 }
 
