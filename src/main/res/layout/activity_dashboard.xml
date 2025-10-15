@@ -169,11 +169,27 @@
             </LinearLayout>
 
             <!-- Expense Breakdown Chart -->
-            <com.github.mikephil.charting.charts.PieChart
-                    android:id="@+id/pieChart"
+            <LinearLayout
+                    android:id="@+id/chart_container"
                     android:layout_width="match_parent"
-                    android:layout_height="250dp"
-                    android:layout_marginTop="16dp" />
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                <TextView
+                        android:id="@+id/chart_toggle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Show Chart"
+                        android:padding="8dp"
+                        android:textColor="@color/primary"
+                        android:layout_gravity="center"/>
+
+                <com.github.mikephil.charting.charts.PieChart
+                        android:id="@+id/pieChart"
+                        android:layout_width="match_parent"
+                        android:layout_height="200dp"
+                        android:visibility="gone"/>
+            </LinearLayout>
 
             <!-- Recent Transactions Header -->
             <RelativeLayout
@@ -185,13 +201,14 @@
                     android:elevation="4dp">
 
                 <TextView
+                        android:id="@+id/tvExpenseListTitle"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Recent Transactions"
                         android:textAppearance="?attr/textAppearanceHeadline6"
                         android:layout_alignParentStart="true"
                         android:layout_centerVertical="true"
-                        android:textColor="?android:attr/textColorPrimary"/>
+                        android:textColor="?android:attr/textColorPrimary"
+                        tools:text="October Expenses"/>
 
                 <ImageButton
                         android:id="@+id/btnAddExpense"
@@ -208,9 +225,11 @@
             <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/rvExpenses"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    tools:listitem="@layout/item_expense" />
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:paddingBottom="8dp"
+                    android:clipToPadding="false"
+                    app:layout_behavior="@string/appbar_scrolling_view_behavior"/>
 
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
