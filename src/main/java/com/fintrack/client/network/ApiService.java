@@ -6,6 +6,9 @@ import com.fintrack.client.models.*;
 import retrofit2.Call;
 import retrofit2.http.*;
 
+import java.util.List;
+import java.util.UUID;
+
 public interface ApiService {
 
     @POST("api/v1/auth/register")
@@ -45,5 +48,29 @@ public interface ApiService {
 
     @POST("api/v1/cards/add")
     Call<GenericResponse> addCreditCard(@Body AddCreditCardRequest request);
-}
 
+    // MVP Feature Endpoints
+    @POST("api/v1/accounts/link")
+    Call<Void> linkAccount(@Body LinkAccountRequest request);
+
+    @POST("api/v1/accounts/sync")
+    Call<Void> syncAccounts(@Query("userId") UUID userId);
+
+    @GET("api/v1/categories")
+    Call<List<Category>> getCategories(@Query("userId") UUID userId);
+
+    @POST("api/v1/categories")
+    Call<Category> createCategory(@Body Category category);
+
+    @GET("api/v1/goals")
+    Call<List<SavingsGoal>> getSavingsGoals(@Query("userId") UUID userId);
+
+    @POST("api/v1/goals")
+    Call<SavingsGoal> createSavingsGoal(@Body SavingsGoal savingsGoal);
+
+    @POST("api/v1/auth/mfa/setup")
+    Call<MfaSetupResponse> setupMfa(@Query("username") String username);
+
+    @POST("api/v1/auth/mfa/verify")
+    Call<Void> verifyMfa(@Body VerifyMfaRequest verifyRequest);
+}

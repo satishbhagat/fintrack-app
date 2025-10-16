@@ -48,7 +48,7 @@ public class DashboardActivity extends BaseActivity implements ExpenseAdapter.On
     private ApiService apiService;
     private ExpenseAdapter expenseAdapter;
 
-    private TextView tvTotalIncome, tvSavings, tvAmountNeeded, tvSelectedMonth, toolbarTitle;
+    private TextView tvTotalIncome, tvSavings, tvAmountNeeded, tvSelectedMonth, toolbarTitle, tvExpenseListTitle, chartToggle;
     private RecyclerView rvExpenses;
     private PieChart pieChart;
     private ImageButton btnAddExpense;
@@ -89,7 +89,8 @@ public class DashboardActivity extends BaseActivity implements ExpenseAdapter.On
         monthSelectorContainer = findViewById(R.id.month_selector_container);
         tvSelectedMonth = findViewById(R.id.tvSelectedMonth);
         dashboardContent = findViewById(R.id.dashboard_content_container);
-
+        tvExpenseListTitle = findViewById(R.id.tvExpenseListTitle); // Initialize the title TextView
+        chartToggle = findViewById(R.id.chart_toggle); // Initialize chart toggle button
 
         setupRecyclerView();
 
@@ -103,6 +104,17 @@ public class DashboardActivity extends BaseActivity implements ExpenseAdapter.On
 
         btnAddExpense.setOnClickListener(v -> showAddExpenseDialog());
         monthSelectorContainer.setOnClickListener(v -> showMonthYearPickerDialog());
+
+        // Add click listener for chart toggle
+        chartToggle.setOnClickListener(v -> {
+            if (pieChart.getVisibility() == View.GONE) {
+                pieChart.setVisibility(View.VISIBLE);
+                chartToggle.setText("Hide Chart");
+            } else {
+                pieChart.setVisibility(View.GONE);
+                chartToggle.setText("Show Chart");
+            }
+        });
     }
 
     @Override
@@ -173,6 +185,7 @@ public class DashboardActivity extends BaseActivity implements ExpenseAdapter.On
     private void updateMonthSelectorText() {
         String monthName = new DateFormatSymbols().getMonths()[selectedMonth - 1];
         tvSelectedMonth.setText(String.format(Locale.getDefault(), "%s %d", monthName, selectedYear));
+        tvExpenseListTitle.setText(String.format(Locale.getDefault(), "%s Expenses", monthName)); // Set the expense list title
     }
 
     private void fetchDashboardData() {
@@ -242,9 +255,11 @@ public class DashboardActivity extends BaseActivity implements ExpenseAdapter.On
         BigDecimal amountNeeded = BigDecimal.ZERO;
 
         for (AbstractExpenseItem item : expenseAdapter.getCurrentExpenses()) {
-            totalExpenses = totalExpenses.add(item.getAmount());
-            if ("PENDING".equalsIgnoreCase(item.getStatus())) {
-                amountNeeded = amountNeeded.add(item.getAmount());
+            if (item.getAmount() != null) {
+                totalExpenses = totalExpenses.add(item.getAmount());
+                if ("PENDING".equalsIgnoreCase(item.getStatus())) {
+                    amountNeeded = amountNeeded.add(item.getAmount());
+                }
             }
         }
 
@@ -266,7 +281,7 @@ public class DashboardActivity extends BaseActivity implements ExpenseAdapter.On
         ArrayList<PieEntry> entries = new ArrayList<>();
         for (AbstractExpenseItem expense : expenses) {
             // Only add entries with a positive amount to the chart
-            if (expense.getAmount().floatValue() > 0) {
+            if (expense.getAmount() != null && expense.getAmount().floatValue() > 0) {
                 entries.add(new PieEntry(expense.getAmount().floatValue(), expense.getName()));
             }
         }
@@ -312,7 +327,8 @@ public class DashboardActivity extends BaseActivity implements ExpenseAdapter.On
 
             AddMonthlyExpenseRequest request = new AddMonthlyExpenseRequest();
             request.name = name;
-            request.amount = Double.parseDouble(amountStr);
+            request.amount = new BigDecimal(amountStr);
+            request.userId = UserSession.getInstance().getUserId().toString();
             // Use the selected month and year for the new expense
             request.month = String.format(Locale.ROOT, "%04d-%02d-01", selectedYear, selectedMonth);
 
@@ -321,9 +337,8 @@ public class DashboardActivity extends BaseActivity implements ExpenseAdapter.On
                 public void onResponse(Call<MonthlyExpense> call, Response<MonthlyExpense> response) {
                     if (response.isSuccessful() && response.body() != null) {
                         Toast.makeText(DashboardActivity.this, "Expense added!", Toast.LENGTH_SHORT).show();
-                        // Optimistic UI update
-                        expenseAdapter.addExpense(response.body());
-                        recalculateSummary();
+                        // Refresh data from the server to ensure consistency
+                        fetchDashboardData();
                     } else {
                         Toast.makeText(DashboardActivity.this, "Failed to add expense.", Toast.LENGTH_SHORT).show();
                     }
@@ -357,3 +372,4 @@ public class DashboardActivity extends BaseActivity implements ExpenseAdapter.On
         }
     }
 }
+
