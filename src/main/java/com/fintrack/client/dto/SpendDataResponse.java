@@ -46,6 +46,9 @@ public class SpendDataResponse {
         @SerializedName("name")
         private String name;
 
+        @SerializedName("id")
+        private String id;
+
         @SerializedName("amount")
         private BigDecimal amount;
 
@@ -56,12 +59,19 @@ public class SpendDataResponse {
         public BigDecimal getAmount() {
             return amount;
         }
+
+        public String getId() {
+            return id;
+        }
     }
 
     // Inner class for Credit Card items
     public static class CreditCardItem {
         @SerializedName("cardName")
         private String cardName;
+
+        @SerializedName("id")
+        private String id;
 
         @SerializedName("dueDate")
         private String dueDate; // e.g., "15th"
@@ -73,10 +83,18 @@ public class SpendDataResponse {
         public String getDueDate() {
             return dueDate;
         }
+
+        public String getId() {
+            return id;
+        }
     }
 
     // Inner class for Extra Income items
     public static class ExtraIncomeItem {
+
+        @SerializedName("id")
+        private String id;
+
         @SerializedName("amount")
         private BigDecimal amount;
 
@@ -89,6 +107,10 @@ public class SpendDataResponse {
 
         public String getDescription() {
             return description;
+        }
+
+        public String getId() {
+            return id;
         }
     }
 }
