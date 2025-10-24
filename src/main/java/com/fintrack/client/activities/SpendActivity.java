@@ -1,5 +1,6 @@
 package com.fintrack.client.activities;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -40,6 +41,22 @@ public class SpendActivity extends BaseActivity {
 
         bottomNavigationView = findViewById(R.id.bottom_navigation);
         bottomNavigationView.setOnItemSelectedListener(this);
+        // Add listener to handle Goal navigation
+        bottomNavigationView.setOnItemSelectedListener(item -> {
+            int itemId = item.getItemId();
+            if (itemId == R.id.nav_goals) {
+                // Navigate to GoalTrackingFragment or Activity
+                // If it's a fragment within DashboardActivity:
+                Intent intent = new Intent(this, DashboardActivity.class);
+                intent.putExtra("NAVIGATE_TO", "goals"); // Add extra to signal navigation
+                intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT); // Bring DashboardActivity to front if exists
+                startActivity(intent);
+                return true;
+            }
+            // Handle other navigation items using the BaseActivity's method
+            return super.onNavigationItemSelected(item);
+        });
+
 
         apiService = RetrofitClient.getInstance().create(ApiService.class);
 
@@ -68,6 +85,7 @@ public class SpendActivity extends BaseActivity {
         UUID userId = UserSession.getInstance().getUserId();
         if (userId == null) {
             Toast.makeText(this, "Session expired. Please log in again.", Toast.LENGTH_SHORT).show();
+            // Optional: Redirect to login
             return;
         }
 
@@ -111,7 +129,7 @@ public class SpendActivity extends BaseActivity {
         }
     }
 
-    private void addEditableItemView(LinearLayout container, String text, Object item, String type) {
+    private void addEditableItemView(LinearLayout container, String text, final Object item, final String type) {
         LayoutInflater inflater = LayoutInflater.from(this);
         View itemView = inflater.inflate(R.layout.list_item_editable, container, false);
 
@@ -131,24 +149,44 @@ public class SpendActivity extends BaseActivity {
             }
         });
 
-        deleteButton.setOnClickListener(v -> new AlertDialog.Builder(this)
-                .setTitle("Delete Item")
-                .setMessage("Are you sure you want to delete this item?")
-                .setPositiveButton("Yes", (dialog, which) -> {
-                    if ("fixed".equals(type)) {
-                        deleteFixedExpense(((SpendDataResponse.FixedExpenditureItem) item).getId());
-                    } else if ("card".equals(type)) {
-                        deleteCreditCard(((SpendDataResponse.CreditCardItem) item).getId());
-                    } else if ("income".equals(type)) {
-                        deleteOtherIncome(((SpendDataResponse.ExtraIncomeItem) item).getId());
-                    }
-                })
-                .setNegativeButton("No", null)
-                .show());
+        deleteButton.setOnClickListener(v -> {
+            String itemId = null;
+            if ("fixed".equals(type)) {
+                itemId = ((SpendDataResponse.FixedExpenditureItem) item).getId();
+            } else if ("card".equals(type)) {
+                itemId = ((SpendDataResponse.CreditCardItem) item).getId();
+            } else if ("income".equals(type)) {
+                itemId = ((SpendDataResponse.ExtraIncomeItem) item).getId();
+            }
+
+            if (itemId == null) {
+                Toast.makeText(SpendActivity.this, "Error: Item ID is missing.", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            final String finalItemId = itemId; // Need final variable for lambda
+
+            new AlertDialog.Builder(this)
+                    .setTitle("Delete Item")
+                    .setMessage("Are you sure you want to delete this item?")
+                    .setPositiveButton("Yes", (dialog, which) -> {
+                        if ("fixed".equals(type)) {
+                            deleteFixedExpense(finalItemId);
+                        } else if ("card".equals(type)) {
+                            deleteCreditCard(finalItemId);
+                        } else if ("income".equals(type)) {
+                            deleteOtherIncome(finalItemId);
+                        }
+                    })
+                    .setNegativeButton("No", null)
+                    .show();
+        });
 
         container.addView(itemView);
     }
 
+
+    // --- Dialog Methods (showAddFixedExpenseDialog, showAddCreditCardDialog, showAddOtherIncomeDialog) ---
     private void showAddFixedExpenseDialog(SpendDataResponse.FixedExpenditureItem item) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         LayoutInflater inflater = getLayoutInflater();
@@ -172,11 +210,15 @@ public class SpendActivity extends BaseActivity {
                 request.setName(name);
                 request.setAmount(new BigDecimal(amount));
                 request.setUserId(UserSession.getInstance().getUserId().toString());
+                // Assuming dueDate handling if needed based on backend
+                // request.setDueDate(...);
                 if (item == null) {
                     saveNewFixedExpense(request);
                 } else {
                     updateFixedExpense(item.getId(), request);
                 }
+            } else {
+                Toast.makeText(this, "Please fill all fields.", Toast.LENGTH_SHORT).show();
             }
         });
         builder.setNegativeButton("Cancel", null);
@@ -195,21 +237,34 @@ public class SpendActivity extends BaseActivity {
         builder.setTitle(item == null ? "Add New Credit Card" : "Edit Credit Card");
         if(item != null) {
             etCardName.setText(item.getCardName());
-            etDueDate.setText(item.getDueDate());
+            etDueDate.setText(item.getDueDate() != null ? item.getDueDate() : "");
         }
 
         builder.setPositiveButton("Save", (dialog, which) -> {
             String name = etCardName.getText().toString();
-            if (!name.isEmpty()) {
-                AddCreditCardRequest request = new AddCreditCardRequest();
-                request.setCardName(name);
-                request.setUserId(UserSession.getInstance().getUserId().toString());
-                request.setDueDate(Integer.parseInt(etDueDate.getText().toString()));
-                if (item == null) {
-                    saveNewCreditCard(request);
-                } else {
-                    updateCreditCard(item.getId(), request);
+            String dueDateStr = etDueDate.getText().toString();
+            if (!name.isEmpty() && !dueDateStr.isEmpty()) {
+                try {
+                    int dueDate = Integer.parseInt(dueDateStr);
+                    if (dueDate < 1 || dueDate > 31) {
+                        Toast.makeText(this, "Due date must be between 1 and 31.", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    AddCreditCardRequest request = new AddCreditCardRequest();
+                    request.setCardName(name);
+                    request.setUserId(UserSession.getInstance().getUserId().toString());
+                    request.setDueDate(dueDate);
+                    if (item == null) {
+                        saveNewCreditCard(request);
+                    } else {
+                        updateCreditCard(item.getId(), request);
+                    }
+                } catch (NumberFormatException e) {
+                    Toast.makeText(this, "Invalid due date.", Toast.LENGTH_SHORT).show();
                 }
+
+            } else {
+                Toast.makeText(this, "Please fill all fields.", Toast.LENGTH_SHORT).show();
             }
         });
         builder.setNegativeButton("Cancel", null);
@@ -224,59 +279,73 @@ public class SpendActivity extends BaseActivity {
 
         final EditText etDesc = dialogView.findViewById(R.id.etIncomeDescription);
         final EditText etAmount = dialogView.findViewById(R.id.etIncomeAmount);
+        final RadioGroup rgType = dialogView.findViewById(R.id.rgIncomeType);
+        final RadioButton rbOneTime = dialogView.findViewById(R.id.rbOneTime);
+        final RadioButton rbRecurring = dialogView.findViewById(R.id.rbRecurring);
 
         builder.setTitle(item == null ? "Log Other Income" : "Edit Other Income");
         if (item != null) {
             etDesc.setText(item.getDescription());
             etAmount.setText(item.getAmount().toString());
+            if (item.isRecurring()) {
+                rbRecurring.setChecked(true);
+            } else {
+                rbOneTime.setChecked(true);
+            }
+        } else {
+            rbOneTime.setChecked(true); // Default for new income
         }
 
         builder.setPositiveButton("Save", (dialog, which) -> {
             String desc = etDesc.getText().toString();
-            String amount = etAmount.getText().toString();
-            if (!desc.isEmpty() && !amount.isEmpty()) {
+            String amountStr = etAmount.getText().toString();
+            if (!desc.isEmpty() && !amountStr.isEmpty()) {
                 AddIncomeRequest income = new AddIncomeRequest();
                 income.setDescription(desc);
-                income.setAmount(new BigDecimal(amount));
+                income.setAmount(new BigDecimal(amountStr));
                 SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
-                income.setIncomeMonth(sdf.format(Calendar.getInstance().getTime()));
+                income.setIncomeMonth(sdf.format(Calendar.getInstance().getTime())); // Consider using a date picker
                 income.setUserId(UserSession.getInstance().getUserId().toString());
+                income.setRecurring(rbRecurring.isChecked());
 
                 if (item == null) {
                     saveOtherIncome(income);
                 } else {
                     updateOtherIncome(item.getId(), income);
                 }
+            } else {
+                Toast.makeText(this, "Please fill all fields.", Toast.LENGTH_SHORT).show();
             }
         });
         builder.setNegativeButton("Cancel", null);
         builder.show();
     }
 
+    // --- API Call Methods (saveNewFixedExpense, updateFixedExpense, deleteFixedExpense, etc.) ---
     private void saveNewFixedExpense(AddFixedExpenditureRequest request) {
-        apiService.addFixedExpense(request).enqueue(new Callback<FixedExpenditure>() {
+        apiService.addFixedExpense(request).enqueue(new Callback<FixedExpenditure>() { // Changed from GenericResponse
             @Override
             public void onResponse(Call<FixedExpenditure> call, Response<FixedExpenditure> response) {
                 if (response.isSuccessful()) {
                     Toast.makeText(SpendActivity.this, "Bill Saved!", Toast.LENGTH_SHORT).show();
                     fetchSpendData();
                 } else {
-                    Toast.makeText(SpendActivity.this, "Failed to save.", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(SpendActivity.this, "Failed to save bill.", Toast.LENGTH_SHORT).show();
                 }
             }
             @Override
             public void onFailure(Call<FixedExpenditure> call, Throwable t) {
-                Toast.makeText(SpendActivity.this, "Network Error.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(SpendActivity.this, "Network Error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
     }
 
     private void updateFixedExpense(String id, AddFixedExpenditureRequest request) {
-        apiService.updateFixedExpense(id, request).enqueue(new Callback<FixedExpenditure>() {
+        apiService.updateFixedExpense(id, request).enqueue(new Callback<FixedExpenditure>() { // Changed
             @Override
             public void onResponse(Call<FixedExpenditure> call, Response<FixedExpenditure> response) {
                 if(response.isSuccessful()) {
-                    Toast.makeText(SpendActivity.this, "Updated!", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(SpendActivity.this, "Bill Updated!", Toast.LENGTH_SHORT).show();
                     fetchSpendData();
                 } else {
                     Toast.makeText(SpendActivity.this, "Update failed.", Toast.LENGTH_SHORT).show();
@@ -284,7 +353,7 @@ public class SpendActivity extends BaseActivity {
             }
             @Override
             public void onFailure(Call<FixedExpenditure> call, Throwable t) {
-                Toast.makeText(SpendActivity.this, "Network Error.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(SpendActivity.this, "Network Error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -294,7 +363,7 @@ public class SpendActivity extends BaseActivity {
             @Override
             public void onResponse(Call<Void> call, Response<Void> response) {
                 if(response.isSuccessful()) {
-                    Toast.makeText(SpendActivity.this, "Deleted!", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(SpendActivity.this, "Bill Deleted!", Toast.LENGTH_SHORT).show();
                     fetchSpendData();
                 } else {
                     Toast.makeText(SpendActivity.this, "Delete failed.", Toast.LENGTH_SHORT).show();
@@ -302,35 +371,35 @@ public class SpendActivity extends BaseActivity {
             }
             @Override
             public void onFailure(Call<Void> call, Throwable t) {
-                Toast.makeText(SpendActivity.this, "Network Error.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(SpendActivity.this, "Network Error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
     }
 
     private void saveNewCreditCard(AddCreditCardRequest request) {
-        apiService.addCreditCard(request).enqueue(new Callback<CreditCard>() {
+        apiService.addCreditCard(request).enqueue(new Callback<CreditCard>() { // Changed
             @Override
             public void onResponse(Call<CreditCard> call, Response<CreditCard> response) {
                 if (response.isSuccessful()) {
                     Toast.makeText(SpendActivity.this, "Card Saved!", Toast.LENGTH_SHORT).show();
                     fetchSpendData();
                 } else {
-                    Toast.makeText(SpendActivity.this, "Failed to save.", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(SpendActivity.this, "Failed to save card.", Toast.LENGTH_SHORT).show();
                 }
             }
             @Override
             public void onFailure(Call<CreditCard> call, Throwable t) {
-                Toast.makeText(SpendActivity.this, "Network Error.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(SpendActivity.this, "Network Error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
     }
 
     private void updateCreditCard(String id, AddCreditCardRequest request) {
-        apiService.updateCreditCard(id, request).enqueue(new Callback<CreditCard>() {
+        apiService.updateCreditCard(id, request).enqueue(new Callback<CreditCard>() { // Changed
             @Override
             public void onResponse(Call<CreditCard> call, Response<CreditCard> response) {
                 if (response.isSuccessful()) {
-                    Toast.makeText(SpendActivity.this, "Updated!", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(SpendActivity.this, "Card Updated!", Toast.LENGTH_SHORT).show();
                     fetchSpendData();
                 } else {
                     Toast.makeText(SpendActivity.this, "Update failed.", Toast.LENGTH_SHORT).show();
@@ -338,7 +407,7 @@ public class SpendActivity extends BaseActivity {
             }
             @Override
             public void onFailure(Call<CreditCard> call, Throwable t) {
-                Toast.makeText(SpendActivity.this, "Network Error.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(SpendActivity.this, "Network Error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -348,7 +417,7 @@ public class SpendActivity extends BaseActivity {
             @Override
             public void onResponse(Call<Void> call, Response<Void> response) {
                 if(response.isSuccessful()) {
-                    Toast.makeText(SpendActivity.this, "Deleted!", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(SpendActivity.this, "Card Deleted!", Toast.LENGTH_SHORT).show();
                     fetchSpendData();
                 } else {
                     Toast.makeText(SpendActivity.this, "Delete failed.", Toast.LENGTH_SHORT).show();
@@ -356,13 +425,13 @@ public class SpendActivity extends BaseActivity {
             }
             @Override
             public void onFailure(Call<Void> call, Throwable t) {
-                Toast.makeText(SpendActivity.this, "Network Error.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(SpendActivity.this, "Network Error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
     }
 
     private void saveOtherIncome(AddIncomeRequest income) {
-        apiService.addExtraIncome(income).enqueue(new Callback<IncomeResponse>() {
+        apiService.addExtraIncome(income).enqueue(new Callback<IncomeResponse>() { // Changed
             @Override
             public void onResponse(Call<IncomeResponse> call, Response<IncomeResponse> response) {
                 if (response.isSuccessful()) {
@@ -374,17 +443,17 @@ public class SpendActivity extends BaseActivity {
             }
             @Override
             public void onFailure(Call<IncomeResponse> call, Throwable t) {
-                Toast.makeText(SpendActivity.this, "Network Error.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(SpendActivity.this, "Network Error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
     }
 
     private void updateOtherIncome(String id, AddIncomeRequest request) {
-        apiService.updateExtraIncome(id, request).enqueue(new Callback<IncomeResponse>() {
+        apiService.updateExtraIncome(id, request).enqueue(new Callback<IncomeResponse>() { // Changed
             @Override
             public void onResponse(Call<IncomeResponse> call, Response<IncomeResponse> response) {
                 if (response.isSuccessful()) {
-                    Toast.makeText(SpendActivity.this, "Updated!", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(SpendActivity.this, "Income Updated!", Toast.LENGTH_SHORT).show();
                     fetchSpendData();
                 } else {
                     Toast.makeText(SpendActivity.this, "Update failed.", Toast.LENGTH_SHORT).show();
@@ -392,7 +461,7 @@ public class SpendActivity extends BaseActivity {
             }
             @Override
             public void onFailure(Call<IncomeResponse> call, Throwable t) {
-                Toast.makeText(SpendActivity.this, "Network Error.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(SpendActivity.this, "Network Error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -402,7 +471,7 @@ public class SpendActivity extends BaseActivity {
             @Override
             public void onResponse(Call<Void> call, Response<Void> response) {
                 if(response.isSuccessful()) {
-                    Toast.makeText(SpendActivity.this, "Deleted!", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(SpendActivity.this, "Income Deleted!", Toast.LENGTH_SHORT).show();
                     fetchSpendData();
                 } else {
                     Toast.makeText(SpendActivity.this, "Delete failed.", Toast.LENGTH_SHORT).show();
@@ -410,7 +479,7 @@ public class SpendActivity extends BaseActivity {
             }
             @Override
             public void onFailure(Call<Void> call, Throwable t) {
-                Toast.makeText(SpendActivity.this, "Network Error.", Toast.LENGTH_SHORT).show();
+                Toast.makeText(SpendActivity.this, "Network Error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -421,4 +490,3 @@ public class SpendActivity extends BaseActivity {
         bottomNavigationView.getMenu().findItem(R.id.nav_spend).setChecked(true);
     }
 }
-
