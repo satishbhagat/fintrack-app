@@ -1,13 +1,12 @@
 package com.fintrack.client.models;
 
-import java.util.UUID;
+import java.math.BigDecimal;
 
 public class AddMonthlyExpenseRequest {
     public String name;
-
-    public double amount;
+    public BigDecimal amount;
     public String month; // e.g., "2025-09-01"
-    public UUID userId;
+    public String userId;
     public String status;
 
     public String getName() {
@@ -18,11 +17,11 @@ public class AddMonthlyExpenseRequest {
         this.name = name;
     }
 
-    public double getAmount() {
+    public BigDecimal getAmount() {
         return amount;
     }
 
-    public void setAmount(double amount) {
+    public void setAmount(BigDecimal amount) {
         this.amount = amount;
     }
 
@@ -34,11 +33,11 @@ public class AddMonthlyExpenseRequest {
         this.month = month;
     }
 
-    public UUID getUserId() {
+    public String getUserId() {
         return userId;
     }
 
-    public void setUserId(UUID userId) {
+    public void setUserId(String userId) {
         this.userId = userId;
     }
 

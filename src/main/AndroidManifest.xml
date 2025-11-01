@@ -30,6 +30,12 @@
         <activity android:name=".activities.DashboardActivity" />
         <activity android:name=".activities.SpendActivity"/>
         <activity android:name=".activities.ProfileActivity" />
+        <!-- Newly Added Activities -->
+        <activity android:name=".activities.LinkAccountActivity" />
+        <activity android:name=".activities.CustomCategoryActivity" />
+        <activity android:name=".activities.MFASetupActivity" />
+        <activity android:name=".activities.GoalsActivity" />
+
     </application>
 
 </manifest>

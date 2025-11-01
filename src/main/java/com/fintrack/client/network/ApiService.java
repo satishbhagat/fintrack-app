@@ -6,6 +6,9 @@ import com.fintrack.client.models.*;
 import retrofit2.Call;
 import retrofit2.http.*;
 
+import java.util.List;
+import java.util.UUID;
+
 public interface ApiService {
 
     @POST("api/v1/auth/register")
@@ -28,7 +31,7 @@ public interface ApiService {
     Call<GenericResponse> setupProfile( @Body ProfileSetupRequest request);
 
     @POST("api/v1/incomes/add")
-    Call<GenericResponse> addExtraIncome(@Body ExtraIncome request);
+    Call<IncomeResponse> addExtraIncome(@Body AddIncomeRequest request);
 
     @POST("api/v1/expenses/monthly")
     Call<MonthlyExpense> addMonthlyExpense(@Body AddMonthlyExpenseRequest request);
@@ -41,9 +44,54 @@ public interface ApiService {
     Call<SpendDataResponse> getSpendData(@Query("userId") String userId);
 
     @POST("api/v1/expenses/fixed")
-    Call<GenericResponse> addFixedExpense(@Body AddFixedExpenditureRequest request);
+    Call<FixedExpenditure> addFixedExpense(@Body AddFixedExpenditureRequest request);
 
     @POST("api/v1/cards/add")
-    Call<GenericResponse> addCreditCard(@Body AddCreditCardRequest request);
-}
+    Call<CreditCard> addCreditCard(@Body AddCreditCardRequest request);
 
+    // MVP Feature Endpoints
+    @POST("api/v1/accounts/link")
+    Call<Void> linkAccount(@Body LinkAccountRequest request);
+
+    @POST("api/v1/accounts/sync")
+    Call<Void> syncAccounts(@Query("userId") UUID userId);
+
+    @GET("api/v1/categories")
+    Call<List<Category>> getCategories(@Query("userId") UUID userId);
+
+    @POST("api/v1/categories")
+    Call<Category> createCategory(@Body Category category);
+
+    @GET("api/v1/goals")
+    Call<List<SavingsGoal>> getSavingsGoals(@Query("userId") UUID userId);
+
+    @POST("api/v1/goals")
+    Call<SavingsGoal> createSavingsGoal(@Body SavingsGoal savingsGoal);
+
+    @POST("api/v1/auth/mfa/setup")
+    Call<MfaSetupResponse> setupMfa(@Query("username") String username);
+
+    @POST("api/v1/auth/mfa/verify")
+    Call<Void> verifyMfa(@Body VerifyMfaRequest verifyRequest);
+
+    @PUT("api/v1/cards/{id}")
+    Call<CreditCard> updateCreditCard(@Path("id") String id,@Body AddCreditCardRequest request);
+
+    @DELETE("api/v1/cards/{id}")
+    Call<Void> deleteCreditCard(@Path("id") String id);
+
+    @PUT("api/v1/incomes/{id}")
+    Call<IncomeResponse> updateExtraIncome(@Path("id") String id, @Body AddIncomeRequest request);
+
+    @DELETE("api/v1/incomes/{id}")
+    Call<Void> deleteExtraIncome(@Path("id") String id);
+
+    @PUT("api/v1/expenses/fixed/{id}")
+    Call<FixedExpenditure> updateFixedExpense(@Path("id") String id,@Body AddFixedExpenditureRequest request);
+
+    @DELETE("api/v1/expenses/delete/{id}")
+    Call<Void> deleteFixedExpense(@Path("id") String id);
+
+    @POST("api/v1/goals/save")
+    Call<SavingsGoal> saveSavingsGoal(@Body SavingsGoal newGoal);
+}

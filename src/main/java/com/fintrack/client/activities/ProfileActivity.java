@@ -1,6 +1,7 @@
 package com.fintrack.client.activities;
 
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.Toast;
@@ -20,7 +21,7 @@ public class ProfileActivity extends BaseActivity {
 
     private ApiService apiService;
     private TextInputEditText etProfileEmail, etCurrentPassword, etNewPassword, etConfirmPassword;
-    private Button btnUpdatePassword;
+    private Button btnUpdatePassword, btnLinkAccount, btnManageCategories, btnSetupMFA;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,11 +43,18 @@ public class ProfileActivity extends BaseActivity {
         etNewPassword = findViewById(R.id.etNewPassword);
         etConfirmPassword = findViewById(R.id.etConfirmPassword);
         btnUpdatePassword = findViewById(R.id.btnUpdatePassword);
+        btnLinkAccount = findViewById(R.id.btnLinkAccount);
+        btnManageCategories = findViewById(R.id.btnManageCategories);
+        btnSetupMFA = findViewById(R.id.btnSetupMFA);
+
 
         // Populate user email
         etProfileEmail.setText(UserSession.getInstance().getEmailId());
 
         btnUpdatePassword.setOnClickListener(v -> handleChangePassword());
+        btnLinkAccount.setOnClickListener(v -> startActivity(new Intent(this, LinkAccountActivity.class)));
+        btnManageCategories.setOnClickListener(v -> startActivity(new Intent(this, CustomCategoryActivity.class)));
+        btnSetupMFA.setOnClickListener(v -> startActivity(new Intent(this, MFASetupActivity.class)));
     }
 
     private void handleChangePassword() {
@@ -103,4 +111,3 @@ public class ProfileActivity extends BaseActivity {
         }
     }
 }
-
