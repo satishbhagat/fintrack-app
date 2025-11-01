@@ -43,6 +43,8 @@ public abstract class BaseActivity extends AppCompatActivity implements Navigati
             startActivity(new Intent(this, SpendActivity.class));
         } else if (itemId == R.id.nav_profile) {
             startActivity(new Intent(this, ProfileActivity.class));
+        } else if (itemId == R.id.nav_goals) {
+            startActivity(new Intent(this, GoalsActivity.class));
         }
 
         // Add a slide transition

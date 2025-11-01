@@ -12,5 +12,14 @@ public class SavingsGoal {
     private BigDecimal targetAmount;
     private BigDecimal currentAmount;
     private String targetDate;
+    private BigDecimal monthlyContribution;
     private UUID userId;
+
+    public void setMonthlyContribution(BigDecimal monthlyContribution) {
+        this.monthlyContribution= monthlyContribution;
+    }
+
+    public BigDecimal getMonthlyContribution() {
+        return monthlyContribution;
+    }
 }

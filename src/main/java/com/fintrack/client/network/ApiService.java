@@ -91,4 +91,7 @@ public interface ApiService {
 
     @DELETE("api/v1/expenses/delete/{id}")
     Call<Void> deleteFixedExpense(@Path("id") String id);
+
+    @POST("api/v1/goals/save")
+    Call<SavingsGoal> saveSavingsGoal(@Body SavingsGoal newGoal);
 }

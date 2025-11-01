@@ -1,28 +1,28 @@
 package com.fintrack.client.activities;
 
 import android.app.Dialog;
-import android.graphics.Color;
+import android.graphics.Color; // Added import
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.widget.*;
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.Toolbar;
-import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.fintrack.client.R;
 import com.fintrack.client.adapters.ExpenseAdapter;
 import com.fintrack.client.dto.DashboardResponse;
-import com.fintrack.client.fragments.GoalTrackingFragment;
 import com.fintrack.client.models.AbstractExpenseItem;
 import com.fintrack.client.models.AddMonthlyExpenseRequest;
 import com.fintrack.client.models.MonthlyExpense;
+// Import UpdateExpenseRequest if it's used for editing
+import com.fintrack.client.models.UpdateExpenseRequest;
 import com.fintrack.client.network.ApiService;
 import com.fintrack.client.network.RetrofitClient;
+// Import ExpenseSorter if used
+import com.fintrack.client.utils.ExpenseSorter;
 import com.fintrack.client.utils.UserSession;
 import com.github.mikephil.charting.charts.PieChart;
 import com.github.mikephil.charting.data.PieData;
@@ -40,8 +40,10 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
+import java.util.UUID; // Added import for UUID
 
-public class DashboardActivity extends BaseActivity implements ExpenseAdapter.OnExpenseStatusChangedListener {
+// *** Corrected the interface name here ***
+public class DashboardActivity extends BaseActivity implements ExpenseAdapter.OnExpenseInteractionListener {
 
     private static final String TAG = "DashboardActivity";
 
@@ -53,12 +55,10 @@ public class DashboardActivity extends BaseActivity implements ExpenseAdapter.On
     private PieChart pieChart;
     private ImageButton btnAddExpense;
     private LinearLayout monthSelectorContainer;
-    private View dashboardContent;
-
 
     private int selectedYear;
     private int selectedMonth; // 1-12
-    private BigDecimal currentTotalIncome = BigDecimal.ZERO; // State variable for total income
+    private BigDecimal currentTotalIncome = BigDecimal.ZERO;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -88,13 +88,11 @@ public class DashboardActivity extends BaseActivity implements ExpenseAdapter.On
         btnAddExpense = findViewById(R.id.btnAddExpense);
         monthSelectorContainer = findViewById(R.id.month_selector_container);
         tvSelectedMonth = findViewById(R.id.tvSelectedMonth);
-        dashboardContent = findViewById(R.id.dashboard_content_container);
-        tvExpenseListTitle = findViewById(R.id.tvExpenseListTitle); // Initialize the title TextView
-        chartToggle = findViewById(R.id.chart_toggle); // Initialize chart toggle button
+        tvExpenseListTitle = findViewById(R.id.tvExpenseListTitle);
+        chartToggle = findViewById(R.id.chart_toggle);
 
         setupRecyclerView();
 
-        // Set initial month to current month
         Calendar cal = Calendar.getInstance();
         selectedYear = cal.get(Calendar.YEAR);
         selectedMonth = cal.get(Calendar.MONTH) + 1;
@@ -102,10 +100,8 @@ public class DashboardActivity extends BaseActivity implements ExpenseAdapter.On
         updateMonthSelectorText();
         fetchDashboardData();
 
-        btnAddExpense.setOnClickListener(v -> showAddExpenseDialog());
+        btnAddExpense.setOnClickListener(v -> showAddExpenseDialog(null)); // Pass null for adding new
         monthSelectorContainer.setOnClickListener(v -> showMonthYearPickerDialog());
-
-        // Add click listener for chart toggle
         chartToggle.setOnClickListener(v -> {
             if (pieChart.getVisibility() == View.GONE) {
                 pieChart.setVisibility(View.VISIBLE);
@@ -117,40 +113,6 @@ public class DashboardActivity extends BaseActivity implements ExpenseAdapter.On
         });
     }
 
-    @Override
-    public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-        int itemId = item.getItemId();
-        Fragment fragment = null;
-        String title = "Dashboard";
-
-        if (itemId == R.id.nav_goals) {
-            fragment = new GoalTrackingFragment();
-            title = "Savings Goals";
-        } else {
-            // Handle other navigation items from BaseActivity or here
-            if (itemId == R.id.nav_home) {
-                // Show dashboard content if it's hidden
-                if (dashboardContent.getVisibility() == View.GONE) {
-                    getSupportFragmentManager().beginTransaction().remove(getSupportFragmentManager().findFragmentById(R.id.fragment_container)).commit();
-                    dashboardContent.setVisibility(View.VISIBLE);
-                }
-                setToolbarTitle("Dashboard");
-                return true;
-            }
-            return super.onNavigationItemSelected(item);
-        }
-
-        if (fragment != null) {
-            dashboardContent.setVisibility(View.GONE);
-            getSupportFragmentManager().beginTransaction()
-                    .replace(R.id.fragment_container, fragment)
-                    .commit();
-            setToolbarTitle(title);
-        }
-        return true;
-    }
-
-
     private void showMonthYearPickerDialog() {
         final Dialog dialog = new Dialog(this);
         dialog.setContentView(R.layout.dialog_month_year_picker);
@@ -159,13 +121,11 @@ public class DashboardActivity extends BaseActivity implements ExpenseAdapter.On
         final NumberPicker yearPicker = dialog.findViewById(R.id.picker_year);
         Button btnSelect = dialog.findViewById(R.id.btnSelectMonth);
 
-        // Month Picker
         monthPicker.setMinValue(1);
         monthPicker.setMaxValue(12);
         monthPicker.setDisplayedValues(new DateFormatSymbols().getMonths());
         monthPicker.setValue(selectedMonth);
 
-        // Year Picker
         int currentYear = Calendar.getInstance().get(Calendar.YEAR);
         yearPicker.setMinValue(currentYear - 5);
         yearPicker.setMaxValue(currentYear + 5);
@@ -185,14 +145,14 @@ public class DashboardActivity extends BaseActivity implements ExpenseAdapter.On
     private void updateMonthSelectorText() {
         String monthName = new DateFormatSymbols().getMonths()[selectedMonth - 1];
         tvSelectedMonth.setText(String.format(Locale.getDefault(), "%s %d", monthName, selectedYear));
-        tvExpenseListTitle.setText(String.format(Locale.getDefault(), "%s Expenses", monthName)); // Set the expense list title
+        tvExpenseListTitle.setText(String.format(Locale.getDefault(), "%s Expenses", monthName));
     }
 
     private void fetchDashboardData() {
         String emailId = UserSession.getInstance().getEmailId();
         if (emailId == null) {
             Toast.makeText(this, "User session not found. Please log in again.", Toast.LENGTH_LONG).show();
-            // Here you might want to redirect to LoginActivity
+            // Optional: Redirect to login
             return;
         }
 
@@ -201,109 +161,197 @@ public class DashboardActivity extends BaseActivity implements ExpenseAdapter.On
             @Override
             public void onResponse(Call<DashboardResponse> call, Response<DashboardResponse> response) {
                 if (response.isSuccessful() && response.body() != null) {
+                    Log.d(TAG, "Dashboard data fetched successfully.");
                     updateUI(response.body());
                 } else {
+                    String errorMsg = "Failed to load dashboard data.";
+                    if (response.errorBody() != null) {
+                        try {
+                            errorMsg += " Error: " + response.errorBody().string();
+                        } catch (Exception e) {
+                            Log.e(TAG, "Error reading error body", e);
+                        }
+                    } else {
+                        errorMsg += " Code: " + response.code();
+                    }
+                    Log.e(TAG, errorMsg);
                     Toast.makeText(DashboardActivity.this, "Failed to load dashboard data.", Toast.LENGTH_LONG).show();
                 }
             }
 
             @Override
             public void onFailure(Call<DashboardResponse> call, Throwable t) {
+                Log.e(TAG, "Network Error fetching dashboard data", t);
                 Toast.makeText(DashboardActivity.this, "Network Error: " + t.getMessage(), Toast.LENGTH_LONG).show();
             }
         });
     }
 
     private void updateUI(DashboardResponse data) {
-        // Store total income in the state variable and update the UI
+        Log.d(TAG, "Updating UI with fetched data.");
         currentTotalIncome = data.getTotalIncome() != null ? data.getTotalIncome() : BigDecimal.ZERO;
         tvTotalIncome.setText(String.format(Locale.getDefault(), "₹%.2f", currentTotalIncome));
 
-        // Update adapter with both expense lists
-        expenseAdapter.updateExpenses(data.getExpenses(), data.getFixedExpenditures());
+        List<AbstractExpenseItem> allExpenses = new ArrayList<>();
+        if (data.getFixedExpenditures() != null) {
+            allExpenses.addAll(data.getFixedExpenditures());
+        }
+        if (data.getExpenses() != null) {
+            allExpenses.addAll(data.getExpenses());
+        }
 
-        // Recalculate and update summary based on the new list
+        // Add placeholders for Credit Cards if they don't exist as monthly expenses
+        if (data.getCreditCards() != null) {
+            for (DashboardResponse.CreditCardItem card : data.getCreditCards()) {
+                boolean cardExistsAsExpense = false;
+                for (AbstractExpenseItem existingItem : allExpenses) {
+                    if (card.getCardName() != null && card.getCardName().equalsIgnoreCase(existingItem.getName())) {
+                        cardExistsAsExpense = true;
+                        break;
+                    }
+                }
+                if (!cardExistsAsExpense) {
+                    DashboardResponse.MonthlyExpenseItem placeholder = new DashboardResponse.MonthlyExpenseItem();
+                    placeholder.setId(card.getId());
+                    placeholder.setName(card.getCardName());
+                    placeholder.setAmount(BigDecimal.ZERO);
+                    placeholder.setStatus("PENDING");
+                    placeholder.setExpenseMonth(String.format(Locale.ROOT, "%04d-%02d-01", selectedYear, selectedMonth));
+                    allExpenses.add(placeholder);
+                }
+            }
+        }
+
+        // Sort before updating adapter
+        ExpenseSorter.sortByAmountDescending(allExpenses);
+
+        expenseAdapter.updateExpenses(allExpenses);
         recalculateSummary();
+        setReadOnlyMode(checkIfMonthIsDifferent()); // Use the flag from backend
+        setupPieChart(allExpenses); // Update chart data
+    }
 
-        // Check if the selected month is in the past to set read-only mode
-        Calendar cal = Calendar.getInstance();
-        int currentYear = cal.get(Calendar.YEAR);
-        int currentMonth = cal.get(Calendar.MONTH) + 1;
-        boolean isPastMonth = selectedYear < currentYear || (selectedYear == currentYear && selectedMonth < currentMonth);
-        setReadOnlyMode(isPastMonth);
+    private boolean checkIfMonthIsDifferent() {
+        Calendar now = Calendar.getInstance();
+        int currentYear = now.get(Calendar.YEAR);
+        int currentMonth = now.get(Calendar.MONTH) + 1; // Calendar.MONTH is zero-based
+
+        boolean isDifferent = (selectedYear != currentYear) || (selectedMonth != currentMonth);
+        Log.d(TAG, "Check if selected month/year is different from current: " + isDifferent);
+        return isDifferent;
     }
 
     private void setReadOnlyMode(boolean isReadOnly) {
+        Log.d(TAG, "Setting read-only mode: " + isReadOnly);
         btnAddExpense.setVisibility(isReadOnly ? View.GONE : View.VISIBLE);
         expenseAdapter.setReadOnly(isReadOnly);
     }
 
     private void setupRecyclerView() {
         rvExpenses.setLayoutManager(new LinearLayoutManager(this));
-        expenseAdapter = new ExpenseAdapter(new ArrayList<>(), this);
+        expenseAdapter = new ExpenseAdapter(new ArrayList<>(), this); // Pass 'this' as the listener
         rvExpenses.setAdapter(expenseAdapter);
     }
 
+    // --- Implementation of OnExpenseInteractionListener ---
     @Override
     public void onStatusChanged() {
-        // When status changes, recalculate the summary using the stored total income
-        recalculateSummary();
+        Log.d(TAG, "onStatusChanged triggered. Recalculating summary.");
+        recalculateSummary(); // Recalculate totals when status changes
     }
 
-    private void recalculateSummary() {
-        BigDecimal totalExpenses = BigDecimal.ZERO;
-        BigDecimal amountNeeded = BigDecimal.ZERO;
+    @Override
+    public void onAmountClicked(AbstractExpenseItem item) {
+        Log.d(TAG, "onAmountClicked triggered for item: " + (item != null ? item.getName() : "null"));
+        // This is called when the amount TextView is clicked in the adapter
+        showAddExpenseDialog(item); // Open the edit/add dialog
+    }
+    // --- End of Listener Implementation ---
 
-        for (AbstractExpenseItem item : expenseAdapter.getCurrentExpenses()) {
-            if (item.getAmount() != null) {
-                totalExpenses = totalExpenses.add(item.getAmount());
+
+    private void recalculateSummary() {
+        BigDecimal totalExpensesPaid = BigDecimal.ZERO;
+        BigDecimal amountNeeded = BigDecimal.ZERO; // Renamed from totalPendingAmount for clarity
+
+        List<AbstractExpenseItem> currentItems = expenseAdapter.getCurrentExpenses(); // Get current items from adapter
+        if (currentItems != null) {
+            for (AbstractExpenseItem item : currentItems) {
+                BigDecimal itemAmount = (item.getAmount() != null) ? item.getAmount() : BigDecimal.ZERO;
+
+                if ("PAID".equalsIgnoreCase(item.getStatus())) {
+                    totalExpensesPaid = totalExpensesPaid.add(itemAmount);
+                }
+                // Amount needed is the sum of amounts for PENDING items
                 if ("PENDING".equalsIgnoreCase(item.getStatus())) {
-                    amountNeeded = amountNeeded.add(item.getAmount());
+                    amountNeeded = amountNeeded.add(itemAmount);
                 }
             }
+        } else {
+            Log.w(TAG, "expenseAdapter.getCurrentExpenses() returned null during recalculateSummary");
         }
 
-        BigDecimal savings = currentTotalIncome.subtract(totalExpenses);
-        tvSavings.setText(String.format(Locale.getDefault(), "₹%.2f", savings));
-        tvAmountNeeded.setText(String.format(Locale.getDefault(), "₹%.2f", amountNeeded));
 
-        // Refresh pie chart with new data
-        setupPieChart(expenseAdapter.getCurrentExpenses());
+        // Savings = Total Income - Total *Paid* Expenses
+        BigDecimal savings = currentTotalIncome.subtract(totalExpensesPaid);
+
+        tvSavings.setText(String.format(Locale.getDefault(), "₹%.2f", savings));
+        tvAmountNeeded.setText(String.format(Locale.getDefault(), "₹%.2f", amountNeeded)); // Display total pending
+
+        Log.d(TAG, "Recalculated Summary - Paid: " + totalExpensesPaid + ", Needed: " + amountNeeded + ", Savings: " + savings);
+
+        // Refresh pie chart with potentially updated data
+        setupPieChart(currentItems);
     }
 
     private void setupPieChart(List<AbstractExpenseItem> expenses) {
         if (expenses == null || expenses.isEmpty()) {
             pieChart.clear();
+            pieChart.setNoDataText("No expense data for this month.");
             pieChart.invalidate();
+            Log.d(TAG, "Pie chart cleared due to no/empty data.");
             return;
         }
 
         ArrayList<PieEntry> entries = new ArrayList<>();
+        BigDecimal totalChartAmount = BigDecimal.ZERO;
         for (AbstractExpenseItem expense : expenses) {
-            // Only add entries with a positive amount to the chart
-            if (expense.getAmount() != null && expense.getAmount().floatValue() > 0) {
-                entries.add(new PieEntry(expense.getAmount().floatValue(), expense.getName()));
+            BigDecimal amount = (expense.getAmount() != null) ? expense.getAmount() : BigDecimal.ZERO;
+            if (amount.compareTo(BigDecimal.ZERO) > 0) {
+                entries.add(new PieEntry(amount.floatValue(), expense.getName()));
+                totalChartAmount = totalChartAmount.add(amount);
             }
         }
 
-        PieDataSet dataSet = new PieDataSet(entries, "");
+        if (entries.isEmpty()) {
+            pieChart.clear();
+            pieChart.setNoDataText("No expenses with amounts > 0 this month.");
+            pieChart.invalidate();
+            Log.d(TAG, "Pie chart cleared as no entries have amount > 0.");
+            return;
+        }
+
+        PieDataSet dataSet = new PieDataSet(entries, "Expenses");
         dataSet.setColors(ColorTemplate.MATERIAL_COLORS);
-        dataSet.setValueTextColor(Color.BLACK);
+        dataSet.setValueTextColor(Color.BLACK); // Use Color.BLACK
         dataSet.setValueTextSize(12f);
         dataSet.setValueFormatter(new PercentFormatter(pieChart));
+        dataSet.setSliceSpace(2f);
 
         PieData pieData = new PieData(dataSet);
         pieChart.setData(pieData);
         pieChart.setUsePercentValues(true);
         pieChart.getDescription().setEnabled(false);
         pieChart.setDrawEntryLabels(false);
-        pieChart.setCenterText("Expenses");
-        pieChart.setCenterTextSize(16f);
+        pieChart.setCenterText("Expenses\n₹" + String.format(Locale.getDefault(), "%.2f", totalChartAmount));
+        pieChart.setCenterTextSize(14f);
+        pieChart.getLegend().setEnabled(true); // Maybe disable if too cluttered: false
         pieChart.animateY(1000);
         pieChart.invalidate();
+        Log.d(TAG, "Pie chart updated with " + entries.size() + " entries.");
     }
 
-    private void showAddExpenseDialog() {
+    // Modified to accept an item to edit (can be null for adding)
+    private void showAddExpenseDialog(final AbstractExpenseItem itemToEdit) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         LayoutInflater inflater = getLayoutInflater();
         View dialogView = inflater.inflate(R.layout.dialog_add_expense, null);
@@ -313,6 +361,21 @@ public class DashboardActivity extends BaseActivity implements ExpenseAdapter.On
         final EditText etExpenseAmount = dialogView.findViewById(R.id.etExpenseAmount);
         final Button btnSave = dialogView.findViewById(R.id.btnSaveExpense);
         final Button btnCancel = dialogView.findViewById(R.id.btnCancel);
+
+        // *** Removed the lines accessing R.id.tvDialogTitle ***
+
+        if (itemToEdit != null) {
+            etExpenseName.setText(itemToEdit.getName());
+            etExpenseAmount.setText(itemToEdit.getAmount() != null ? itemToEdit.getAmount().toPlainString() : "");
+            // Prevent editing name for existing fixed expenses or placeholders
+            if (itemToEdit instanceof DashboardResponse.FixedExpenditureItem || itemToEdit.getId() == null || itemToEdit.getId().isEmpty() || "null".equalsIgnoreCase(itemToEdit.getId())) {
+                etExpenseName.setEnabled(false);
+            } else {
+                etExpenseName.setEnabled(true);
+            }
+        } else {
+            etExpenseName.setEnabled(true); // Editable for new expenses
+        }
 
         final AlertDialog dialog = builder.create();
 
@@ -325,37 +388,114 @@ public class DashboardActivity extends BaseActivity implements ExpenseAdapter.On
                 return;
             }
 
-            AddMonthlyExpenseRequest request = new AddMonthlyExpenseRequest();
-            request.name = name;
-            request.amount = new BigDecimal(amountStr);
-            request.userId = UserSession.getInstance().getUserId().toString();
-            // Use the selected month and year for the new expense
-            request.month = String.format(Locale.ROOT, "%04d-%02d-01", selectedYear, selectedMonth);
-
-            apiService.addMonthlyExpense(request).enqueue(new Callback<MonthlyExpense>() {
-                @Override
-                public void onResponse(Call<MonthlyExpense> call, Response<MonthlyExpense> response) {
-                    if (response.isSuccessful() && response.body() != null) {
-                        Toast.makeText(DashboardActivity.this, "Expense added!", Toast.LENGTH_SHORT).show();
-                        // Refresh data from the server to ensure consistency
-                        fetchDashboardData();
-                    } else {
-                        Toast.makeText(DashboardActivity.this, "Failed to add expense.", Toast.LENGTH_SHORT).show();
-                    }
+            BigDecimal amount;
+            try {
+                amount = new BigDecimal(amountStr);
+                if (amount.compareTo(BigDecimal.ZERO) < 0) {
+                    Toast.makeText(this, "Amount cannot be negative.", Toast.LENGTH_SHORT).show();
+                    return;
                 }
+            } catch (NumberFormatException e) {
+                Toast.makeText(this, "Invalid amount.", Toast.LENGTH_SHORT).show();
+                return;
+            }
 
-                @Override
-                public void onFailure(Call<MonthlyExpense> call, Throwable t) {
-                    Toast.makeText(DashboardActivity.this, "Network Error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+            boolean isNew = (itemToEdit == null);
+            // Also treat placeholders (items without a valid ID) as needing creation
+            boolean isPlaceholder = !isNew && (itemToEdit.getId() == null || itemToEdit.getId().isEmpty() || "null".equalsIgnoreCase(itemToEdit.getId()));
+
+
+            if (isNew || isPlaceholder) {
+                // Create new expense
+                AddMonthlyExpenseRequest request = new AddMonthlyExpenseRequest();
+                request.setName(name);
+                // Ensure userId is not null and is a valid UUID string
+                UUID userId = UserSession.getInstance().getUserId();
+                if (userId == null) {
+                    Toast.makeText(this, "User session error. Cannot save expense.", Toast.LENGTH_LONG).show();
+                    Log.e(TAG, "User ID is null in UserSession during save");
+                    return;
                 }
-            });
+                request.setUserId(userId.toString()); // Pass UUID as String
+                request.setAmount(amount); // Pass BigDecimal directly
+                request.setMonth(String.format(Locale.ROOT, "%04d-%02d-01", selectedYear, selectedMonth));
+                request.setStatus("PENDING"); // New expenses are pending
+                saveNewMonthlyExpense(request);
+            } else {
+                // Update existing expense
+                UpdateExpenseRequest request = new UpdateExpenseRequest();
+                request.setAmount(amount); // Pass BigDecimal directly
+                // Status is handled by the switch, but if you want to allow changing status here too:
+                // request.setStatus(itemToEdit.getStatus()); // Or get from a UI element in dialog
+                updateExistingExpense(itemToEdit.getId(), request);
+            }
             dialog.dismiss();
         });
 
         btnCancel.setOnClickListener(v -> dialog.dismiss());
-
         dialog.show();
     }
+
+
+    private void saveNewMonthlyExpense(AddMonthlyExpenseRequest request) {
+        Log.d(TAG, "Saving new expense: " + request.getName());
+        apiService.addMonthlyExpense(request).enqueue(new Callback<MonthlyExpense>() {
+            @Override
+            public void onResponse(Call<MonthlyExpense> call, Response<MonthlyExpense> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    Toast.makeText(DashboardActivity.this, "Expense added!", Toast.LENGTH_SHORT).show();
+                    Log.d(TAG, "New expense saved successfully, refetching data.");
+                    fetchDashboardData(); // Refresh the whole list
+                } else {
+                    String errorMsg = "Failed to add expense.";
+                    if (response.errorBody() != null) {
+                        try { errorMsg += " Error: " + response.errorBody().string(); } catch (Exception e) {}
+                    } else { errorMsg += " Code: " + response.code(); }
+                    Log.e(TAG, errorMsg);
+                    Toast.makeText(DashboardActivity.this, "Failed to add expense.", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<MonthlyExpense> call, Throwable t) {
+                Log.e(TAG, "Network error adding expense", t);
+                Toast.makeText(DashboardActivity.this, "Network Error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void updateExistingExpense(String expenseId, UpdateExpenseRequest request) {
+        Log.d(TAG, "Updating expense ID: " + expenseId);
+        if (expenseId == null || expenseId.isEmpty() || "null".equalsIgnoreCase(expenseId)) {
+            Log.e(TAG, "Invalid expense ID passed to updateExistingExpense: " + expenseId);
+            Toast.makeText(this, "Cannot update expense: Invalid ID.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        apiService.updateExpense(expenseId, request).enqueue(new Callback<Void>() {
+            @Override
+            public void onResponse(Call<Void> call, Response<Void> response) {
+                if (response.isSuccessful()) {
+                    Toast.makeText(DashboardActivity.this, "Expense updated!", Toast.LENGTH_SHORT).show();
+                    Log.d(TAG, "Expense updated successfully, refetching data.");
+                    fetchDashboardData(); // Refresh the list
+                } else {
+                    String errorMsg = "Failed to update expense.";
+                    if (response.errorBody() != null) {
+                        try { errorMsg += " Error: " + response.errorBody().string(); } catch (Exception e) {}
+                    } else { errorMsg += " Code: " + response.code(); }
+                    Log.e(TAG, errorMsg);
+                    Toast.makeText(DashboardActivity.this, "Failed to update expense.", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Void> call, Throwable t) {
+                Log.e(TAG, "Network error updating expense", t);
+                Toast.makeText(DashboardActivity.this, "Network Error: " + t.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
 
     @Override
     protected void onResume() {
